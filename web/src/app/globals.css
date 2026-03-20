@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+:root {
+  --color-primary: #C15F3C;
+  --color-primary-dark: #ae5630;
+  --color-bg: #F4F3EE;
+  --color-gray: #B1ADA1;
+  --color-foreground: #2C2C2C;
+}
+
+@theme inline {
+  --color-primary: var(--color-primary);
+  --color-primary-dark: var(--color-primary-dark);
+  --color-bg: var(--color-bg);
+  --color-gray: var(--color-gray);
+  --color-foreground: var(--color-foreground);
+  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-foreground);
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-gray);
+  border-radius: 3px;
+}
+
+/* TV static animation */
+@keyframes static-noise {
+  0% { background-position: 0 0; }
+  25% { background-position: -50px -50px; }
+  50% { background-position: 50px 25px; }
+  75% { background-position: -25px 50px; }
+  100% { background-position: 0 0; }
+}
+.tv-static {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.7'/%3E%3C/svg%3E");
+  animation: static-noise 0.15s steps(5) infinite;
+}
+
+/* Progress bar animation */
+@keyframes progress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
