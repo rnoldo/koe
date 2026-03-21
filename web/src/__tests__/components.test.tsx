@@ -12,48 +12,43 @@ function resetStore() {
 }
 
 // ============================================================
-// Kids home — channel selection
+// Kids home — channel selection (now unified TV page)
 // ============================================================
 describe('Channel selection /kids', () => {
   beforeEach(resetStore)
 
-  it('renders all channels', async () => {
-    const KidsHome = (await import('@/app/kids/page')).default
-    render(<KidsHome />)
-    const channels = useStore.getState().channels
-    channels.forEach((ch) => {
-      expect(screen.getByText(ch.name)).toBeInTheDocument()
-    })
+  it('renders first channel name', async () => {
+    const KidsPage = (await import('@/app/kids/page')).default
+    render(<KidsPage />)
+    const sorted = [...useStore.getState().channels].sort((a, b) => a.sortOrder - b.sortOrder)
+    expect(screen.getByText(sorted[0].name)).toBeInTheDocument()
   })
 
-  it('shows "Start watching" button', async () => {
-    const KidsHome = (await import('@/app/kids/page')).default
-    render(<KidsHome />)
-    expect(screen.getByText('Start watching')).toBeInTheDocument()
+  it('auto-plays on load (shows time)', async () => {
+    const KidsPage = (await import('@/app/kids/page')).default
+    render(<KidsPage />)
+    expect(screen.getAllByText(/0:00/).length).toBeGreaterThan(0)
   })
 
-  it('has settings entry (gear icon)', async () => {
-    const KidsHome = (await import('@/app/kids/page')).default
-    render(<KidsHome />)
+  it('has settings button', async () => {
+    const KidsPage = (await import('@/app/kids/page')).default
+    render(<KidsPage />)
     const buttons = screen.getAllByRole('button')
     expect(buttons.length).toBeGreaterThan(0)
   })
 
   it('shows empty state when no channels', async () => {
     useStore.setState({ channels: [] })
-    const KidsHome = (await import('@/app/kids/page')).default
-    render(<KidsHome />)
+    const KidsPage = (await import('@/app/kids/page')).default
+    render(<KidsPage />)
     expect(screen.getByText('No channels yet')).toBeInTheDocument()
   })
 
-  it('can switch channels left/right', async () => {
-    const KidsHome = (await import('@/app/kids/page')).default
-    render(<KidsHome />)
-    const buttons = screen.getAllByRole('button')
-    const rightArrow = buttons.find((b) => b.querySelector('svg[class*="lucide-chevron-right"]'))
-    if (rightArrow) {
-      fireEvent.click(rightArrow)
-    }
+  it('keyboard left/right switches channels', async () => {
+    const KidsPage = (await import('@/app/kids/page')).default
+    render(<KidsPage />)
+    fireEvent.keyDown(window, { key: 'ArrowRight' })
+    fireEvent.keyDown(window, { key: 'ArrowLeft' })
   })
 })
 
@@ -471,53 +466,45 @@ describe('Channel editor', () => {
 })
 
 // ============================================================
-// Play page
+// Kids TV page (unified browse + play)
 // ============================================================
-describe('Play page /kids/play', () => {
+describe('Kids TV page /kids', () => {
   beforeEach(() => {
     resetStore()
-    const ch = useStore.getState().channels[0]
-    useStore.getState().updateSettings({ lastChannelId: ch.id })
   })
 
   it('renders channel name and video title', async () => {
-    const PlayPage = (await import('@/app/kids/play/page')).default
-    render(<PlayPage />)
-    const ch = useStore.getState().channels[0]
-    expect(screen.getByText(ch.name)).toBeInTheDocument()
+    const KidsPage = (await import('@/app/kids/page')).default
+    render(<KidsPage />)
+    const sorted = [...useStore.getState().channels].sort((a, b) => a.sortOrder - b.sortOrder)
+    expect(screen.getByText(sorted[0].name)).toBeInTheDocument()
   })
 
   it('shows playback time', async () => {
-    const PlayPage = (await import('@/app/kids/play/page')).default
-    render(<PlayPage />)
-    expect(screen.getByText(/0:00/)).toBeInTheDocument()
+    const KidsPage = (await import('@/app/kids/page')).default
+    render(<KidsPage />)
+    expect(screen.getAllByText(/0:00/).length).toBeGreaterThan(0)
   })
 
-  it('shows empty content message', async () => {
-    useStore.getState().addChannel({
-      name: 'Empty Channel',
-      iconName: 'tv',
-      iconColor: '#ccc',
-      defaultVolume: 50,
-      videoIds: [],
-    })
-    const emptyChannel = useStore.getState().channels.find((c) => c.name === 'Empty Channel')!
-    useStore.getState().updateSettings({ lastChannelId: emptyChannel.id })
+  it('shows empty state when no channels', async () => {
+    // Remove all channels
+    const channels = useStore.getState().channels
+    channels.forEach((c) => useStore.getState().deleteChannel(c.id))
 
-    const PlayPage = (await import('@/app/kids/play/page')).default
-    render(<PlayPage />)
-    expect(screen.getByText('No playable content')).toBeInTheDocument()
+    const KidsPage = (await import('@/app/kids/page')).default
+    render(<KidsPage />)
+    expect(screen.getByText('No channels yet')).toBeInTheDocument()
   })
 
   it('keyboard space toggles play/pause', async () => {
-    const PlayPage = (await import('@/app/kids/play/page')).default
-    render(<PlayPage />)
+    const KidsPage = (await import('@/app/kids/page')).default
+    render(<KidsPage />)
     fireEvent.keyDown(window, { key: ' ' })
   })
 
-  it('has channel switch zones', async () => {
-    const PlayPage = (await import('@/app/kids/play/page')).default
-    const { container } = render(<PlayPage />)
+  it('has settings button', async () => {
+    const KidsPage = (await import('@/app/kids/page')).default
+    const { container } = render(<KidsPage />)
     const buttons = container.querySelectorAll('button')
     expect(buttons.length).toBeGreaterThan(0)
   })

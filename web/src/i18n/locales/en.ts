@@ -32,6 +32,9 @@ const en = {
   'kids.noChannelsHint': 'Ask a parent to add channels in the admin panel',
   'kids.goSettings': 'Go to settings',
   'kids.startWatching': 'Start watching',
+  'kids.channelInfo': 'CH {current} / {total}',
+  'kids.videoInfo': '{current} / {total}',
+  'kids.videoList': 'Playlist',
 
   // Kids play
   'play.noContent': 'No playable content',

@@ -35,7 +35,7 @@ export default function SettingsPage() {
   const todayMinutes = Math.floor(getTodayWatchTime() / 60)
 
   return (
-    <div className="max-w-xl">
+    <div>
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-medium tracking-tight">{t('settings.title')}</h2>
         <Button onClick={handleSave}>

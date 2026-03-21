@@ -32,6 +32,9 @@ const zh = {
   'kids.noChannelsHint': '请家长先去后台添加频道',
   'kids.goSettings': '前往设置',
   'kids.startWatching': '开始观看',
+  'kids.channelInfo': '频道 {current} / {total}',
+  'kids.videoInfo': '{current} / {total}',
+  'kids.videoList': '节目单',
 
   // Kids play
   'play.noContent': '没有可播放的内容',
