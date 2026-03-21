@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useStore } from '@/store'
+import { useT } from '@/i18n'
 import { Lock } from '@/components/icons'
 
 export default function AdminEntry() {
@@ -12,10 +13,15 @@ export default function AdminEntry() {
   const [pin, setPin] = useState('')
   const [error, setError] = useState(false)
   const [shake, setShake] = useState(false)
+  const t = useT()
 
-  // Already authenticated
+  useEffect(() => {
+    if (isAdminAuthenticated) {
+      router.replace('/admin/sources')
+    }
+  }, [isAdminAuthenticated, router])
+
   if (isAdminAuthenticated) {
-    router.replace('/admin/sources')
     return null
   }
 
@@ -41,71 +47,64 @@ export default function AdminEntry() {
 
   return (
     <div className="h-full flex flex-col items-center justify-center bg-bg">
-      <div className={`flex flex-col items-center gap-6 ${shake ? 'animate-shake' : ''}`}>
-        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-          <Lock size={28} className="text-primary" />
+      <div className={`flex flex-col items-center gap-5 ${shake ? 'animate-shake' : ''}`}>
+        <div className="w-14 h-14 rounded-2xl bg-primary/8 flex items-center justify-center">
+          <Lock size={24} className="text-primary" />
         </div>
-        <h1 className="text-xl text-foreground">家长验证</h1>
-        <p className="text-sm text-gray">输入 PIN 码进入管理后台</p>
+        <div className="text-center">
+          <h1 className="text-lg font-medium text-foreground tracking-tight">{t('admin.parentAuth')}</h1>
+          <p className="text-[13px] text-gray mt-1">{t('admin.enterPin')}</p>
+        </div>
 
         {/* PIN dots */}
-        <div className="flex gap-3 my-4">
+        <div className="flex gap-3 my-2">
           {[0, 1, 2, 3].map((i) => (
             <div
               key={i}
-              className={`w-4 h-4 rounded-full transition-all duration-200 ${
+              className={`w-3 h-3 rounded-full transition-all duration-200 ${
                 i < pin.length
-                  ? error ? 'bg-red-500' : 'bg-primary'
-                  : 'bg-gray/30'
+                  ? error ? 'bg-red-400 scale-110' : 'bg-primary scale-110'
+                  : 'bg-border'
               }`}
             />
           ))}
         </div>
 
-        {error && <p className="text-red-500 text-sm">PIN 码错误</p>}
+        {error && <p className="text-red-400 text-[13px] -mt-1">{t('admin.wrongPin')}</p>}
 
         {/* Number pad */}
-        <div className="grid grid-cols-3 gap-3 mt-2">
+        <div className="grid grid-cols-3 gap-2.5 mt-1">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
             <button
               key={n}
               onClick={() => handleDigit(n)}
-              className="w-16 h-16 rounded-2xl bg-white hover:bg-gray/10 border border-gray/20 text-xl font-medium transition-colors cursor-pointer"
+              className="w-14 h-14 rounded-xl bg-surface hover:bg-bg-secondary border border-border text-lg font-medium transition-all cursor-pointer active:scale-95"
             >
               {n}
             </button>
           ))}
           <button
             onClick={() => router.push('/kids')}
-            className="w-16 h-16 rounded-2xl text-gray text-sm cursor-pointer hover:bg-gray/10"
+            className="w-14 h-14 rounded-xl text-gray text-[13px] cursor-pointer hover:bg-bg-secondary transition-colors"
           >
-            返回
+            {t('common.back')}
           </button>
           <button
             onClick={() => handleDigit(0)}
-            className="w-16 h-16 rounded-2xl bg-white hover:bg-gray/10 border border-gray/20 text-xl font-medium transition-colors cursor-pointer"
+            className="w-14 h-14 rounded-xl bg-surface hover:bg-bg-secondary border border-border text-lg font-medium transition-all cursor-pointer active:scale-95"
           >
             0
           </button>
           <button
             onClick={handleDelete}
-            className="w-16 h-16 rounded-2xl text-gray text-sm cursor-pointer hover:bg-gray/10"
+            className="w-14 h-14 rounded-xl text-gray text-[13px] cursor-pointer hover:bg-bg-secondary transition-colors"
           >
-            删除
+            {t('common.delete')}
           </button>
         </div>
 
-        <p className="text-xs text-gray mt-4">默认 PIN: 1234</p>
+        <p className="text-[11px] text-gray-light mt-3">{t('admin.defaultPin')}</p>
       </div>
-
-      <style>{`
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          20%, 60% { transform: translateX(-8px); }
-          40%, 80% { transform: translateX(8px); }
-        }
-        .animate-shake { animation: shake 0.4s ease-in-out; }
-      `}</style>
     </div>
   )
 }

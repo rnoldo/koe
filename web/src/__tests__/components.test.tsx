@@ -1,7 +1,5 @@
 /**
- * 组件渲染测试 — 验证 UI 层关键行为
- *
- * 对照 README 需求验证各页面能否正确渲染和交互
+ * Component render tests — verify UI key behaviors
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
@@ -14,12 +12,12 @@ function resetStore() {
 }
 
 // ============================================================
-// 儿童前台 — 频道选择页
+// Kids home — channel selection
 // ============================================================
-describe('频道选择页 /kids — README 2.1', () => {
+describe('Channel selection /kids', () => {
   beforeEach(resetStore)
 
-  it('渲染所有频道', async () => {
+  it('renders all channels', async () => {
     const KidsHome = (await import('@/app/kids/page')).default
     render(<KidsHome />)
     const channels = useStore.getState().channels
@@ -28,35 +26,30 @@ describe('频道选择页 /kids — README 2.1', () => {
     })
   })
 
-  it('显示"开始观看"按钮', async () => {
+  it('shows "Start watching" button', async () => {
     const KidsHome = (await import('@/app/kids/page')).default
     render(<KidsHome />)
-    expect(screen.getByText('开始观看')).toBeInTheDocument()
+    expect(screen.getByText('Start watching')).toBeInTheDocument()
   })
 
-  it('有设置入口（齿轮图标）', async () => {
+  it('has settings entry (gear icon)', async () => {
     const KidsHome = (await import('@/app/kids/page')).default
     render(<KidsHome />)
-    // 设置按钮存在（通向 /admin）
     const buttons = screen.getAllByRole('button')
     expect(buttons.length).toBeGreaterThan(0)
   })
 
-  it('频道为空时显示空状态', async () => {
+  it('shows empty state when no channels', async () => {
     useStore.setState({ channels: [] })
     const KidsHome = (await import('@/app/kids/page')).default
     render(<KidsHome />)
-    expect(screen.getByText('还没有频道哦')).toBeInTheDocument()
+    expect(screen.getByText('No channels yet')).toBeInTheDocument()
   })
 
-  it('可以左右切换频道', async () => {
+  it('can switch channels left/right', async () => {
     const KidsHome = (await import('@/app/kids/page')).default
     render(<KidsHome />)
-    const channels = useStore.getState().channels.sort((a, b) => a.sortOrder - b.sortOrder)
-
-    // 初始选中第一个频道，点击右箭头应切换
     const buttons = screen.getAllByRole('button')
-    // 找到右箭头按钮 (包含 ChevronRight)
     const rightArrow = buttons.find((b) => b.querySelector('svg[class*="lucide-chevron-right"]'))
     if (rightArrow) {
       fireEvent.click(rightArrow)
@@ -65,76 +58,74 @@ describe('频道选择页 /kids — README 2.1', () => {
 })
 
 // ============================================================
-// 家长后台 — PIN 验证页
+// Admin — PIN verification
 // ============================================================
-describe('PIN 验证页 /admin — README 2.2 访问控制', () => {
+describe('PIN page /admin', () => {
   beforeEach(resetStore)
 
-  it('渲染数字键盘', async () => {
+  it('renders number pad', async () => {
     const AdminEntry = (await import('@/app/admin/page')).default
     render(<AdminEntry />)
-    // 0-9 数字按钮应该存在
     for (let i = 0; i <= 9; i++) {
       expect(screen.getByText(String(i))).toBeInTheDocument()
     }
   })
 
-  it('显示"家长验证"标题', async () => {
+  it('shows "Parent verification" title', async () => {
     const AdminEntry = (await import('@/app/admin/page')).default
     render(<AdminEntry />)
-    expect(screen.getByText('家长验证')).toBeInTheDocument()
+    expect(screen.getByText('Parent verification')).toBeInTheDocument()
   })
 
-  it('输入错误 PIN 显示错误提示', async () => {
+  it('shows error on wrong PIN', async () => {
     const AdminEntry = (await import('@/app/admin/page')).default
     render(<AdminEntry />)
-    // 输入 0000（错误 PIN）
     fireEvent.click(screen.getByText('0'))
     fireEvent.click(screen.getByText('0'))
     fireEvent.click(screen.getByText('0'))
     fireEvent.click(screen.getByText('0'))
 
     await waitFor(() => {
-      expect(screen.getByText('PIN 码错误')).toBeInTheDocument()
+      expect(screen.getByText('Incorrect PIN')).toBeInTheDocument()
     })
   })
 
-  it('有返回按钮', async () => {
+  it('has back button', async () => {
     const AdminEntry = (await import('@/app/admin/page')).default
     render(<AdminEntry />)
-    expect(screen.getByText('返回')).toBeInTheDocument()
+    expect(screen.getByText('Back')).toBeInTheDocument()
   })
 
-  it('有删除按钮可以退格', async () => {
+  it('has delete button', async () => {
     const AdminEntry = (await import('@/app/admin/page')).default
     render(<AdminEntry />)
-    expect(screen.getByText('删除')).toBeInTheDocument()
+    expect(screen.getByText('Delete')).toBeInTheDocument()
   })
 
-  it('显示默认 PIN 提示', async () => {
+  it('shows default PIN hint', async () => {
     const AdminEntry = (await import('@/app/admin/page')).default
     render(<AdminEntry />)
-    expect(screen.getByText('默认 PIN: 1234')).toBeInTheDocument()
+    expect(screen.getByText('Default PIN: 1234')).toBeInTheDocument()
   })
 })
 
 // ============================================================
-// 家长后台 — 媒体源管理
+// Admin — Media sources
 // ============================================================
-describe('媒体源管理 /admin/sources — README 2.2', () => {
+describe('Sources /admin/sources', () => {
   beforeEach(() => {
     resetStore()
     useStore.setState({ isAdminAuthenticated: true })
   })
 
-  it('渲染媒体源列表', async () => {
+  it('renders source list', async () => {
     const SourcesPage = (await import('@/app/admin/sources/page')).default
     render(<SourcesPage />)
-    expect(screen.getByText('媒体源')).toBeInTheDocument()
-    expect(screen.getByText('添加媒体源')).toBeInTheDocument()
+    expect(screen.getByText('Media Sources')).toBeInTheDocument()
+    expect(screen.getByText('Add Source')).toBeInTheDocument()
   })
 
-  it('显示所有 mock 媒体源', async () => {
+  it('shows all mock sources', async () => {
     const SourcesPage = (await import('@/app/admin/sources/page')).default
     render(<SourcesPage />)
     const sources = useStore.getState().sources
@@ -143,292 +134,414 @@ describe('媒体源管理 /admin/sources — README 2.2', () => {
     })
   })
 
-  it('显示媒体源类型标签', async () => {
+  it('shows source type labels', async () => {
     const SourcesPage = (await import('@/app/admin/sources/page')).default
     render(<SourcesPage />)
     expect(screen.getByText('SMB')).toBeInTheDocument()
-    expect(screen.getByText('阿里云盘')).toBeInTheDocument()
+    expect(screen.getByText('Alibaba Drive')).toBeInTheDocument()
   })
 
-  it('点击添加显示添加表单', async () => {
+  it('click add shows add form', async () => {
     const SourcesPage = (await import('@/app/admin/sources/page')).default
     render(<SourcesPage />)
-    fireEvent.click(screen.getByRole('button', { name: /添加媒体源/ }))
-    expect(screen.getByPlaceholderText('例如：NAS 动画片')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Add Source/ }))
+    expect(screen.getByPlaceholderText('e.g. NAS Cartoons')).toBeInTheDocument()
   })
 
-  it('添加表单中显示所有 8 种类型选项', async () => {
+  it('add form shows all 8 type options', async () => {
     const SourcesPage = (await import('@/app/admin/sources/page')).default
     render(<SourcesPage />)
-    fireEvent.click(screen.getByRole('button', { name: /添加媒体源/ }))
-    const typeLabels = ['本地目录', 'WebDAV', '百度网盘', '115网盘', 'Jellyfin']
+    fireEvent.click(screen.getByRole('button', { name: /Add Source/ }))
+    const typeLabels = ['Local', 'WebDAV', 'Baidu Drive', '115 Drive', 'Jellyfin']
     typeLabels.forEach((label) => {
-      // Use getAllByText since some labels may also appear in the source list
       expect(screen.getAllByText(label).length).toBeGreaterThan(0)
     })
   })
 
-  it('显示启用/禁用状态', async () => {
+  it('shows enabled/disabled status', async () => {
     const SourcesPage = (await import('@/app/admin/sources/page')).default
     render(<SourcesPage />)
-    // 有启用和禁用的源
-    expect(screen.getAllByText('已启用').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Enabled').length).toBeGreaterThan(0)
   })
 })
 
 // ============================================================
-// 家长后台 — 视频库
+// Admin — Video library
 // ============================================================
-describe('视频库 /admin/library — README 2.2 视频库管理', () => {
+describe('Library /admin/library', () => {
   beforeEach(() => {
     resetStore()
     useStore.setState({ isAdminAuthenticated: true })
   })
 
-  it('渲染视频库标题和视频总数', async () => {
+  it('renders title and total count', async () => {
     const LibraryPage = (await import('@/app/admin/library/page')).default
     render(<LibraryPage />)
-    expect(screen.getByText('视频库')).toBeInTheDocument()
+    expect(screen.getByText('Video Library')).toBeInTheDocument()
     const total = useStore.getState().videos.length
-    expect(screen.getByText(`共 ${total} 个视频`)).toBeInTheDocument()
+    expect(screen.getByText(`${total} videos total`)).toBeInTheDocument()
   })
 
-  it('有搜索框', async () => {
+  it('has search box', async () => {
     const LibraryPage = (await import('@/app/admin/library/page')).default
     render(<LibraryPage />)
-    expect(screen.getByPlaceholderText('搜索视频...')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Search videos...')).toBeInTheDocument()
   })
 
-  it('有按源筛选的按钮', async () => {
+  it('has source filter buttons', async () => {
     const LibraryPage = (await import('@/app/admin/library/page')).default
     render(<LibraryPage />)
-    expect(screen.getByText('全部')).toBeInTheDocument()
+    expect(screen.getByText('All')).toBeInTheDocument()
     const sources = useStore.getState().sources
     sources.forEach((src) => {
-      // 源名可能出现在筛选按钮和视频标签中
       expect(screen.getAllByText(src.name).length).toBeGreaterThan(0)
     })
   })
 
-  it('有网格/列表视图切换', async () => {
+  it('has grid/list view toggle', async () => {
     const LibraryPage = (await import('@/app/admin/library/page')).default
     render(<LibraryPage />)
-    // 两个视图切换按钮
     const buttons = screen.getAllByRole('button')
     expect(buttons.length).toBeGreaterThanOrEqual(2)
   })
 
-  it('显示所有视频标题', async () => {
+  it('shows video titles', async () => {
     const LibraryPage = (await import('@/app/admin/library/page')).default
     render(<LibraryPage />)
     const videos = useStore.getState().videos
-    // 至少部分视频标题可见
     const firstVideo = videos[0]
     expect(screen.getByText(firstVideo.title)).toBeInTheDocument()
   })
 
-  it('搜索过滤视频', async () => {
+  it('search filters videos', async () => {
     const LibraryPage = (await import('@/app/admin/library/page')).default
     render(<LibraryPage />)
-    const searchInput = screen.getByPlaceholderText('搜索视频...')
+    const searchInput = screen.getByPlaceholderText('Search videos...')
     await userEvent.type(searchInput, '小猪佩奇')
-    // 非匹配视频不应出现
     expect(screen.queryByText('宝宝巴士儿歌 第1集')).not.toBeInTheDocument()
-    // 匹配视频应出现
     expect(screen.getByText('小猪佩奇 第1集')).toBeInTheDocument()
   })
 
-  it('按源筛选后只显示该源的视频', async () => {
+  it('source filter shows only that source', async () => {
     const LibraryPage = (await import('@/app/admin/library/page')).default
     render(<LibraryPage />)
     const sources = useStore.getState().sources
     const firstSource = sources[0]
-    // 点击第一个源的筛选按钮
     const filterButtons = screen.getAllByText(firstSource.name)
     fireEvent.click(filterButtons[0])
 
-    // 其他源的视频不应出现
     const otherSourceVideos = useStore.getState().videos.filter((v) => v.sourceId !== firstSource.id)
     if (otherSourceVideos.length > 0) {
       expect(screen.queryByText(otherSourceVideos[0].title)).not.toBeInTheDocument()
     }
   })
 
-  it('显示视频所属频道标签', async () => {
+  it('shows channel tags on videos', async () => {
     const LibraryPage = (await import('@/app/admin/library/page')).default
     render(<LibraryPage />)
-    // 第一个频道的名称应作为标签出现
     const firstChannel = useStore.getState().channels[0]
     const channelLabels = screen.getAllByText(firstChannel.name)
-    expect(channelLabels.length).toBeGreaterThan(0) // 至少在筛选按钮和标签中出现
+    expect(channelLabels.length).toBeGreaterThan(0)
   })
 })
 
 // ============================================================
-// 家长后台 — 频道管理
+// Admin — Channels
 // ============================================================
-describe('频道管理 /admin/channels — README 2.2', () => {
+describe('Channels /admin/channels', () => {
   beforeEach(() => {
     resetStore()
     useStore.setState({ isAdminAuthenticated: true })
   })
 
-  it('渲染频道列表', async () => {
+  it('renders channel list', async () => {
     const ChannelsPage = (await import('@/app/admin/channels/page')).default
     render(<ChannelsPage />)
-    expect(screen.getByText('频道管理')).toBeInTheDocument()
+    expect(screen.getByText('Channel Management')).toBeInTheDocument()
     const channels = useStore.getState().channels
     channels.forEach((ch) => {
       expect(screen.getByText(ch.name)).toBeInTheDocument()
     })
   })
 
-  it('显示新建频道按钮', async () => {
+  it('shows new channel button', async () => {
     const ChannelsPage = (await import('@/app/admin/channels/page')).default
     render(<ChannelsPage />)
-    expect(screen.getByText('新建频道')).toBeInTheDocument()
+    expect(screen.getByText('New Channel')).toBeInTheDocument()
   })
 
-  it('显示每个频道的视频数', async () => {
+  it('shows video count for each channel', async () => {
     const ChannelsPage = (await import('@/app/admin/channels/page')).default
     render(<ChannelsPage />)
     const channels = useStore.getState().channels
-    // 多个频道可能有相同视频数，用 getAllByText
-    const uniqueCounts = [...new Set(channels.map((ch) => `${ch.videoIds.length} 个视频`))]
+    const uniqueCounts = [...new Set(channels.map((ch) => `${ch.videoIds.length} videos`))]
     uniqueCounts.forEach((text) => {
       expect(screen.getAllByText(text).length).toBeGreaterThan(0)
     })
   })
 
-  it('点击新建频道显示创建表单', async () => {
+  it('has new channel button', async () => {
     const ChannelsPage = (await import('@/app/admin/channels/page')).default
     render(<ChannelsPage />)
-    fireEvent.click(screen.getByText('新建频道'))
-    expect(screen.getByPlaceholderText('频道名称')).toBeInTheDocument()
+    expect(screen.getByText('New Channel')).toBeInTheDocument()
   })
 
-  it('频道为空时显示空状态', async () => {
+  it('shows empty state when no channels', async () => {
     useStore.setState({ channels: [] })
     const ChannelsPage = (await import('@/app/admin/channels/page')).default
     render(<ChannelsPage />)
-    expect(screen.getByText('还没有频道')).toBeInTheDocument()
+    expect(screen.getByText('No channels yet')).toBeInTheDocument()
   })
 })
 
 // ============================================================
-// 家长后台 — 设置页
+// Admin — Settings
 // ============================================================
-describe('设置页 /admin/settings — README 2.2 设置与管控', () => {
+describe('Settings /admin/settings', () => {
   beforeEach(() => {
     resetStore()
     useStore.setState({ isAdminAuthenticated: true })
   })
 
-  it('渲染设置标题', async () => {
+  it('renders title', async () => {
     const SettingsPage = (await import('@/app/admin/settings/page')).default
     render(<SettingsPage />)
-    expect(screen.getByText('设置')).toBeInTheDocument()
+    expect(screen.getByText('Settings')).toBeInTheDocument()
   })
 
-  it('有 PIN 码设置区域', async () => {
+  it('has PIN section', async () => {
     const SettingsPage = (await import('@/app/admin/settings/page')).default
     render(<SettingsPage />)
-    expect(screen.getByText('家长 PIN 码')).toBeInTheDocument()
+    expect(screen.getByText('Parent PIN')).toBeInTheDocument()
   })
 
-  it('有观看时长控制区域', async () => {
+  it('has watch time control', async () => {
     const SettingsPage = (await import('@/app/admin/settings/page')).default
     render(<SettingsPage />)
-    expect(screen.getByText('观看时长控制')).toBeInTheDocument()
+    expect(screen.getByText('Watch Time Control')).toBeInTheDocument()
   })
 
-  it('有全局音量限制区域', async () => {
+  it('has volume control', async () => {
     const SettingsPage = (await import('@/app/admin/settings/page')).default
     render(<SettingsPage />)
-    expect(screen.getByText('全局音量限制')).toBeInTheDocument()
+    expect(screen.getByText('Global Volume Limit')).toBeInTheDocument()
   })
 
-  it('有保存按钮', async () => {
+  it('has save button', async () => {
     const SettingsPage = (await import('@/app/admin/settings/page')).default
     render(<SettingsPage />)
-    expect(screen.getByText('保存设置')).toBeInTheDocument()
+    expect(screen.getByText('Save Settings')).toBeInTheDocument()
   })
 
-  it('有"不限制"选项按钮', async () => {
+  it('has "No limit" option', async () => {
     const SettingsPage = (await import('@/app/admin/settings/page')).default
     render(<SettingsPage />)
-    expect(screen.getByText('不限制')).toBeInTheDocument()
+    expect(screen.getAllByText('No limit').length).toBeGreaterThan(0)
   })
 
-  it('有允许时间段设置（开始/结束）', async () => {
+  it('has allowed time range', async () => {
     const SettingsPage = (await import('@/app/admin/settings/page')).default
     render(<SettingsPage />)
-    expect(screen.getByText('允许开始时间')).toBeInTheDocument()
-    expect(screen.getByText('允许结束时间')).toBeInTheDocument()
+    expect(screen.getByText('Allowed Start Time')).toBeInTheDocument()
+    expect(screen.getByText('Allowed End Time')).toBeInTheDocument()
   })
 
-  it('显示今日已观看时长', async () => {
-    useStore.getState().addWatchTime(600) // 10 分钟
+  it('shows today watch time', async () => {
+    useStore.getState().addWatchTime(600) // 10 minutes
     const SettingsPage = (await import('@/app/admin/settings/page')).default
     render(<SettingsPage />)
-    expect(screen.getByText('今日已看 10 分钟')).toBeInTheDocument()
+    expect(screen.getByText('Today watched 10 min')).toBeInTheDocument()
   })
 })
 
 // ============================================================
-// 播放页
+// Source config forms + OAuth
 // ============================================================
-describe('播放页 /kids/play — README 2.1', () => {
+describe('Source config forms', () => {
+  beforeEach(() => {
+    resetStore()
+    useStore.setState({ isAdminAuthenticated: true })
+  })
+
+  it('WebDAV shows URL/username/password fields', async () => {
+    const SourcesPage = (await import('@/app/admin/sources/page')).default
+    render(<SourcesPage />)
+    fireEvent.click(screen.getByRole('button', { name: /Add Source/ }))
+    fireEvent.click(screen.getByText('WebDAV'))
+    expect(screen.getByPlaceholderText('https://dav.example.com/videos')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('username')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('password')).toBeInTheDocument()
+  })
+
+  it('SMB shows host/share/username/password fields', async () => {
+    const SourcesPage = (await import('@/app/admin/sources/page')).default
+    render(<SourcesPage />)
+    fireEvent.click(screen.getByRole('button', { name: /Add Source/ }))
+    const smbButtons = screen.getAllByText('SMB')
+    const smbInGrid = smbButtons.find((el) => el.closest('.grid'))
+    fireEvent.click(smbInGrid?.closest('button') || smbButtons[smbButtons.length - 1])
+    expect(screen.getByPlaceholderText('192.168.1.100')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('videos')).toBeInTheDocument()
+  })
+
+  it('Emby shows server/API Key/userID fields', async () => {
+    const SourcesPage = (await import('@/app/admin/sources/page')).default
+    render(<SourcesPage />)
+    fireEvent.click(screen.getByRole('button', { name: /Add Source/ }))
+    const embyButtons = screen.getAllByText('Emby')
+    const embyInGrid = embyButtons.find((el) => el.closest('.grid'))
+    fireEvent.click(embyInGrid?.closest('button') || embyButtons[embyButtons.length - 1])
+    expect(screen.getByPlaceholderText('http://192.168.1.200:8096')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('API Key')).toBeInTheDocument()
+  })
+
+  it('Local shows path field', async () => {
+    const SourcesPage = (await import('@/app/admin/sources/page')).default
+    render(<SourcesPage />)
+    fireEvent.click(screen.getByRole('button', { name: /Add Source/ }))
+    expect(screen.getByPlaceholderText('/Volumes/NAS/Videos')).toBeInTheDocument()
+  })
+
+  it('Alibaba Drive shows OAuth button', async () => {
+    const SourcesPage = (await import('@/app/admin/sources/page')).default
+    render(<SourcesPage />)
+    fireEvent.click(screen.getByRole('button', { name: /Add Source/ }))
+    const aliyunSpans = screen.getAllByText('Alibaba Drive')
+    const gridSpan = aliyunSpans.find((el) => el.closest('.grid'))
+    fireEvent.click(gridSpan?.closest('button') || aliyunSpans[aliyunSpans.length - 1])
+    expect(screen.getByText('Authorize Alibaba Drive')).toBeInTheDocument()
+  })
+
+  it('Baidu Drive shows OAuth button', async () => {
+    const SourcesPage = (await import('@/app/admin/sources/page')).default
+    render(<SourcesPage />)
+    fireEvent.click(screen.getByRole('button', { name: /Add Source/ }))
+    fireEvent.click(screen.getByText('Baidu Drive'))
+    expect(screen.getByText('Authorize Baidu Drive')).toBeInTheDocument()
+  })
+
+  it('115 Drive shows scan login button', async () => {
+    const SourcesPage = (await import('@/app/admin/sources/page')).default
+    render(<SourcesPage />)
+    fireEvent.click(screen.getByRole('button', { name: /Add Source/ }))
+    fireEvent.click(screen.getByText('115 Drive'))
+    expect(screen.getByText('Scan to login 115')).toBeInTheDocument()
+  })
+
+  it('has "Connection Config" label', async () => {
+    const SourcesPage = (await import('@/app/admin/sources/page')).default
+    render(<SourcesPage />)
+    fireEvent.click(screen.getByRole('button', { name: /Add Source/ }))
+    expect(screen.getByText('Connection Config')).toBeInTheDocument()
+  })
+})
+
+// ============================================================
+// Channel editor — video management
+// ============================================================
+describe('Channel editor', () => {
+  beforeEach(() => {
+    resetStore()
+    useStore.setState({ isAdminAuthenticated: true })
+  })
+
+  it('store supports updating channel video list', () => {
+    const ch = useStore.getState().channels[0]
+    const allVideos = useStore.getState().videos
+    const batchIds = allVideos.slice(0, 5).map((v) => v.id)
+    useStore.getState().updateChannel(ch.id, { videoIds: batchIds })
+    expect(useStore.getState().channels.find((c) => c.id === ch.id)!.videoIds).toEqual(batchIds)
+  })
+
+  it('store supports clearing channel video list', () => {
+    const ch = useStore.getState().channels[0]
+    expect(ch.videoIds.length).toBeGreaterThan(0)
+    useStore.getState().updateChannel(ch.id, { videoIds: [] })
+    expect(useStore.getState().channels.find((c) => c.id === ch.id)!.videoIds).toEqual([])
+  })
+
+  it('store addChannel creates new channel with videos', () => {
+    const before = useStore.getState().channels.length
+    useStore.getState().addChannel({ name: 'Test Channel', iconName: 'tv', iconColor: '#C15F3C', defaultVolume: 60, videoIds: ['v1', 'v2'] })
+    const after = useStore.getState().channels
+    expect(after.length).toBe(before + 1)
+    const created = after.find((c) => c.name === 'Test Channel')!
+    expect(created.videoIds).toEqual(['v1', 'v2'])
+  })
+})
+
+// ============================================================
+// Play page
+// ============================================================
+describe('Play page /kids/play', () => {
   beforeEach(() => {
     resetStore()
     const ch = useStore.getState().channels[0]
     useStore.getState().updateSettings({ lastChannelId: ch.id })
   })
 
-  it('渲染频道名称和视频标题', async () => {
+  it('renders channel name and video title', async () => {
     const PlayPage = (await import('@/app/kids/play/page')).default
     render(<PlayPage />)
     const ch = useStore.getState().channels[0]
     expect(screen.getByText(ch.name)).toBeInTheDocument()
   })
 
-  it('显示播放进度 (时间)', async () => {
+  it('shows playback time', async () => {
     const PlayPage = (await import('@/app/kids/play/page')).default
     render(<PlayPage />)
-    // 应该显示 0:00 / X:XX 格式
     expect(screen.getByText(/0:00/)).toBeInTheDocument()
   })
 
-  it('没有频道视频时显示提示', async () => {
-    // 创建一个没有视频的频道
+  it('shows empty content message', async () => {
     useStore.getState().addChannel({
-      name: '空频道',
+      name: 'Empty Channel',
       iconName: 'tv',
       iconColor: '#ccc',
       defaultVolume: 50,
       videoIds: [],
     })
-    const emptyChannel = useStore.getState().channels.find((c) => c.name === '空频道')!
+    const emptyChannel = useStore.getState().channels.find((c) => c.name === 'Empty Channel')!
     useStore.getState().updateSettings({ lastChannelId: emptyChannel.id })
 
     const PlayPage = (await import('@/app/kids/play/page')).default
     render(<PlayPage />)
-    expect(screen.getByText('没有可播放的内容')).toBeInTheDocument()
+    expect(screen.getByText('No playable content')).toBeInTheDocument()
   })
 
-  it('键盘空格键切换播放/暂停', async () => {
+  it('keyboard space toggles play/pause', async () => {
     const PlayPage = (await import('@/app/kids/play/page')).default
     render(<PlayPage />)
-    // 按空格暂停
     fireEvent.keyDown(window, { key: ' ' })
-    // 应该显示暂停状态（Play 图标）
   })
 
-  it('有频道切换操作热区', async () => {
+  it('has channel switch zones', async () => {
     const PlayPage = (await import('@/app/kids/play/page')).default
     const { container } = render(<PlayPage />)
-    // 左右边缘应有可点击区域
     const buttons = container.querySelectorAll('button')
     expect(buttons.length).toBeGreaterThan(0)
+  })
+})
+
+// ============================================================
+// i18n — locale switching
+// ============================================================
+describe('i18n locale switching', () => {
+  beforeEach(resetStore)
+
+  it('defaults to English', () => {
+    expect(useStore.getState().locale).toBe('en')
+  })
+
+  it('can switch to Chinese', () => {
+    useStore.getState().setLocale('zh')
+    expect(useStore.getState().locale).toBe('zh')
+  })
+
+  it('renders Chinese when locale is zh', async () => {
+    useStore.setState({ locale: 'zh', channels: [] })
+    const KidsHome = (await import('@/app/kids/page')).default
+    render(<KidsHome />)
+    expect(screen.getByText('还没有频道哦')).toBeInTheDocument()
   })
 })

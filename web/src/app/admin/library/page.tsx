@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { useStore } from '@/store'
+import { useT } from '@/i18n'
 import { Search, LayoutGrid, List, FolderOpen } from '@/components/icons'
 import { Input } from '@/components/ui/input'
 
@@ -23,6 +24,7 @@ export default function LibraryPage() {
   const [search, setSearch] = useState('')
   const [sourceFilter, setSourceFilter] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const t = useT()
 
   const filtered = useMemo(() => {
     let result = videos
@@ -34,59 +36,59 @@ export default function LibraryPage() {
     return result
   }, [videos, search, sourceFilter])
 
-  const getSourceName = (id: string) => sources.find((s) => s.id === id)?.name || '未知源'
+  const getSourceName = (id: string) => sources.find((s) => s.id === id)?.name || t('library.unknownSource')
   const getChannelNames = (videoId: string) =>
     channels.filter((c) => c.videoIds.includes(videoId)).map((c) => c.name)
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-5">
         <div>
-          <h2 className="text-xl font-medium">视频库</h2>
-          <p className="text-sm text-gray mt-1">共 {videos.length} 个视频</p>
+          <h2 className="text-lg font-medium tracking-tight">{t('library.title')}</h2>
+          <p className="text-sm text-foreground-secondary mt-0.5">{t('library.totalVideos', { count: videos.length })}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-0.5 bg-bg-secondary rounded-lg p-0.5">
           <button
             onClick={() => setViewMode('grid')}
-            className={`p-2 rounded-lg cursor-pointer ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-gray'}`}
+            className={`p-1.5 rounded-md cursor-pointer transition-all ${viewMode === 'grid' ? 'bg-surface text-primary shadow-sm' : 'text-gray'}`}
           >
-            <LayoutGrid size={18} />
+            <LayoutGrid size={15} />
           </button>
           <button
             onClick={() => setViewMode('list')}
-            className={`p-2 rounded-lg cursor-pointer ${viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-gray'}`}
+            className={`p-1.5 rounded-md cursor-pointer transition-all ${viewMode === 'list' ? 'bg-surface text-primary shadow-sm' : 'text-gray'}`}
           >
-            <List size={18} />
+            <List size={15} />
           </button>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="relative flex-1 max-w-sm">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray" />
+      <div className="flex items-center gap-3 mb-5">
+        <div className="relative flex-1 max-w-xs">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-light" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="搜索视频..."
-            className="pl-9"
+            placeholder={t('library.searchPlaceholder')}
+            className="pl-8"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1">
           <button
             onClick={() => setSourceFilter(null)}
-            className={`px-3 py-2 rounded-lg text-sm cursor-pointer ${
-              !sourceFilter ? 'bg-primary text-white' : 'bg-white border border-gray/20'
+            className={`px-2.5 py-1.5 rounded-lg text-[12px] cursor-pointer transition-all ${
+              !sourceFilter ? 'bg-primary text-white shadow-sm' : 'bg-surface border border-border text-gray hover:text-foreground-secondary'
             }`}
           >
-            全部
+            {t('common.all')}
           </button>
           {sources.map((src) => (
             <button
               key={src.id}
               onClick={() => setSourceFilter(src.id)}
-              className={`px-3 py-2 rounded-lg text-sm cursor-pointer ${
-                sourceFilter === src.id ? 'bg-primary text-white' : 'bg-white border border-gray/20'
+              className={`px-2.5 py-1.5 rounded-lg text-[12px] cursor-pointer transition-all ${
+                sourceFilter === src.id ? 'bg-primary text-white shadow-sm' : 'bg-surface border border-border text-gray hover:text-foreground-secondary'
               }`}
             >
               {src.name}
@@ -96,26 +98,26 @@ export default function LibraryPage() {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="text-center py-16 text-gray">
-          <FolderOpen size={48} className="mx-auto mb-4 opacity-30" />
-          <p>没有找到视频</p>
+        <div className="text-center py-20 text-gray">
+          <FolderOpen size={36} className="mx-auto mb-3 opacity-20" />
+          <p className="text-sm">{t('library.noVideos')}</p>
         </div>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {filtered.map((v) => (
             <div key={v.id} className="group">
               <div
-                className="aspect-video rounded-xl flex items-center justify-center text-white/60 text-xs mb-2"
+                className="aspect-video rounded-lg flex items-center justify-center text-white/50 text-[11px] mb-2 shadow-sm"
                 style={{ backgroundColor: v.thumbnailColor }}
               >
                 {formatDuration(v.duration)}
               </div>
-              <p className="text-sm font-medium truncate">{v.title}</p>
-              <p className="text-xs text-gray">{getSourceName(v.sourceId)}</p>
+              <p className="text-[13px] font-medium truncate leading-tight">{v.title}</p>
+              <p className="text-[11px] text-gray mt-0.5">{getSourceName(v.sourceId)}</p>
               {getChannelNames(v.id).length > 0 && (
                 <div className="flex gap-1 mt-1 flex-wrap">
                   {getChannelNames(v.id).map((name) => (
-                    <span key={name} className="text-xs px-1.5 py-0.5 bg-primary/10 text-primary rounded">
+                    <span key={name} className="text-[10px] px-1.5 py-0.5 bg-primary/8 text-primary rounded">
                       {name}
                     </span>
                   ))}
@@ -125,18 +127,18 @@ export default function LibraryPage() {
           ))}
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray/20 divide-y divide-gray/10">
+        <div className="bg-surface rounded-xl border border-border divide-y divide-border/60">
           {filtered.map((v) => (
-            <div key={v.id} className="flex items-center gap-4 p-3">
+            <div key={v.id} className="flex items-center gap-4 p-3 hover:bg-bg/40 transition-colors">
               <div
-                className="w-24 h-14 rounded-lg flex items-center justify-center text-white/60 text-xs shrink-0"
+                className="w-20 h-12 rounded-lg flex items-center justify-center text-white/50 text-[10px] shrink-0"
                 style={{ backgroundColor: v.thumbnailColor }}
               >
                 {formatDuration(v.duration)}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{v.title}</p>
-                <div className="flex items-center gap-3 text-xs text-gray mt-0.5">
+                <p className="text-[13px] font-medium truncate">{v.title}</p>
+                <div className="flex items-center gap-2.5 text-[11px] text-gray mt-0.5">
                   <span>{getSourceName(v.sourceId)}</span>
                   <span>{v.resolution}</span>
                   <span>{formatSize(v.fileSize)}</span>
@@ -144,7 +146,7 @@ export default function LibraryPage() {
               </div>
               <div className="flex gap-1">
                 {getChannelNames(v.id).map((name) => (
-                  <span key={name} className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full">
+                  <span key={name} className="text-[10px] px-1.5 py-0.5 bg-primary/8 text-primary rounded-full">
                     {name}
                   </span>
                 ))}

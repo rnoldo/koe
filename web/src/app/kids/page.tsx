@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useStore } from '@/store'
+import { useT } from '@/i18n'
 import { ChannelIcon, Settings, ChevronLeft, ChevronRight, Play } from '@/components/icons'
 
 export default function KidsHome() {
@@ -10,21 +11,24 @@ export default function KidsHome() {
   const channels = useStore((s) => s.channels)
   const updateSettings = useStore((s) => s.updateSettings)
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const t = useT()
 
   const sorted = [...channels].sort((a, b) => a.sortOrder - b.sortOrder)
   const current = sorted[selectedIndex]
 
   if (sorted.length === 0) {
     return (
-      <div className="h-full flex flex-col items-center justify-center gap-6 p-8">
-        <div className="text-6xl">📺</div>
-        <p className="text-xl text-gray">还没有频道哦</p>
-        <p className="text-gray">请家长先去后台添加频道</p>
+      <div className="h-full flex flex-col items-center justify-center gap-5 p-8">
+        <div className="w-20 h-20 rounded-3xl bg-bg-secondary flex items-center justify-center">
+          <span className="text-4xl">📺</span>
+        </div>
+        <p className="text-lg text-foreground-secondary">{t('kids.noChannels')}</p>
+        <p className="text-sm text-gray">{t('kids.noChannelsHint')}</p>
         <button
           onClick={() => router.push('/admin')}
-          className="mt-4 text-primary underline cursor-pointer"
+          className="mt-2 text-sm text-primary hover:underline cursor-pointer"
         >
-          前往设置
+          {t('kids.goSettings')}
         </button>
       </div>
     )
@@ -40,78 +44,84 @@ export default function KidsHome() {
   const next = () => setSelectedIndex((i) => (i + 1) % sorted.length)
 
   return (
-    <div className="h-full flex flex-col items-center justify-center relative select-none">
-      {/* Settings gear */}
+    <div className="h-full flex flex-col items-center justify-center relative select-none bg-bg">
+      {/* Settings gear — very subtle */}
       <button
         onClick={() => router.push('/admin')}
-        className="absolute top-6 right-6 text-gray/50 hover:text-gray transition-colors cursor-pointer"
+        className="absolute top-5 right-5 text-gray-light/40 hover:text-gray transition-colors cursor-pointer"
       >
-        <Settings size={20} />
+        <Settings size={18} />
       </button>
 
       {/* Channel carousel */}
-      <div className="flex items-center gap-8 mb-12">
+      <div className="flex items-center gap-6 mb-10">
         <button
           onClick={prev}
-          className="p-3 rounded-full hover:bg-gray/10 transition-colors text-gray cursor-pointer"
+          className="p-2.5 rounded-full hover:bg-bg-secondary transition-colors text-gray-light cursor-pointer"
         >
-          <ChevronLeft size={28} />
+          <ChevronLeft size={24} />
         </button>
 
-        <div className="flex flex-col items-center gap-4">
-          {/* Channel icons row */}
-          <div className="flex items-center gap-6">
-            {sorted.map((ch, i) => (
+        <div className="flex items-center gap-5">
+          {sorted.map((ch, i) => {
+            const isSelected = i === selectedIndex
+            return (
               <button
                 key={ch.id}
                 onClick={() => setSelectedIndex(i)}
                 className={`
                   flex flex-col items-center gap-2 p-4 rounded-2xl transition-all duration-300 cursor-pointer
-                  ${i === selectedIndex ? 'scale-125 bg-white shadow-lg' : 'opacity-40 scale-90'}
+                  ${isSelected
+                    ? 'scale-[1.15] bg-surface shadow-lg shadow-black/5'
+                    : 'opacity-35 scale-[0.85] hover:opacity-50'
+                  }
                 `}
               >
                 <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                  style={{ backgroundColor: ch.iconColor + '20' }}
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center transition-all"
+                  style={{ backgroundColor: ch.iconColor + (isSelected ? '15' : '10') }}
                 >
-                  <ChannelIcon name={ch.iconName} color={ch.iconColor} size={32} />
+                  <ChannelIcon name={ch.iconName} color={ch.iconColor} size={30} />
                 </div>
                 <span
-                  className="text-sm font-medium"
-                  style={{ color: i === selectedIndex ? ch.iconColor : undefined }}
+                  className="text-[13px] font-medium tracking-tight"
+                  style={{ color: isSelected ? ch.iconColor : undefined }}
                 >
                   {ch.name}
                 </span>
               </button>
-            ))}
-          </div>
+            )
+          })}
         </div>
 
         <button
           onClick={next}
-          className="p-3 rounded-full hover:bg-gray/10 transition-colors text-gray cursor-pointer"
+          className="p-2.5 rounded-full hover:bg-bg-secondary transition-colors text-gray-light cursor-pointer"
         >
-          <ChevronRight size={28} />
+          <ChevronRight size={24} />
         </button>
       </div>
 
       {/* Play button */}
       <button
         onClick={goPlay}
-        className="flex items-center gap-3 px-8 py-4 rounded-2xl text-white text-xl transition-all duration-200 hover:scale-105 cursor-pointer"
-        style={{ backgroundColor: current?.iconColor || '#C15F3C' }}
+        className="flex items-center gap-2.5 px-7 py-3.5 rounded-2xl text-white text-lg tracking-tight transition-all duration-200 hover:scale-[1.03] active:scale-[0.98] cursor-pointer shadow-lg"
+        style={{
+          backgroundColor: current?.iconColor || '#C15F3C',
+          boxShadow: `0 8px 24px ${(current?.iconColor || '#C15F3C')}30`,
+        }}
       >
-        <Play size={24} fill="white" />
-        开始观看
+        <Play size={20} fill="white" />
+        {t('kids.startWatching')}
       </button>
 
       {/* Dots indicator */}
-      <div className="flex gap-2 mt-8">
+      <div className="flex gap-1.5 mt-8">
         {sorted.map((_, i) => (
           <div
             key={i}
-            className={`w-2 h-2 rounded-full transition-all duration-300 ${
-              i === selectedIndex ? 'bg-primary w-6' : 'bg-gray/30'
+            className={`h-1.5 rounded-full transition-all duration-300 ${
+              i === selectedIndex ? 'bg-primary w-5' : 'bg-border w-1.5'
             }`}
           />
         ))}

@@ -69,13 +69,52 @@ export const CHANNEL_COLORS = [
   '#F2CC8F', '#6D6875', '#B5838D', '#E5989B', '#FFB4A2',
 ] as const
 
-export const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
-  local: '本地目录',
-  webdav: 'WebDAV',
-  smb: 'SMB',
-  aliyunDrive: '阿里云盘',
-  baiduPan: '百度网盘',
-  pan115: '115网盘',
-  emby: 'Emby',
-  jellyfin: 'Jellyfin',
+export const SOURCE_TYPES: SourceType[] = ['local', 'webdav', 'smb', 'aliyunDrive', 'baiduPan', 'pan115', 'emby', 'jellyfin']
+
+// Per-source-type config field definitions
+export interface ConfigField {
+  key: string
+  labelKey: string // i18n key
+  placeholder: string
+  type?: 'text' | 'password' | 'url' | 'number'
+  required?: boolean
 }
+
+export const SOURCE_CONFIG_FIELDS: Record<SourceType, ConfigField[]> = {
+  local: [
+    { key: 'path', labelKey: 'config.dirPath', placeholder: '/Volumes/NAS/Videos', required: true },
+  ],
+  webdav: [
+    { key: 'url', labelKey: 'config.serverUrl', placeholder: 'https://dav.example.com/videos', type: 'url', required: true },
+    { key: 'username', labelKey: 'config.username', placeholder: 'username', required: true },
+    { key: 'password', labelKey: 'config.password', placeholder: 'password', type: 'password', required: true },
+  ],
+  smb: [
+    { key: 'host', labelKey: 'config.hostAddr', placeholder: '192.168.1.100', required: true },
+    { key: 'share', labelKey: 'config.shareName', placeholder: 'videos', required: true },
+    { key: 'username', labelKey: 'config.username', placeholder: 'username' },
+    { key: 'password', labelKey: 'config.password', placeholder: 'password', type: 'password' },
+  ],
+  aliyunDrive: [
+    { key: 'rootFolderId', labelKey: 'config.rootFolderId', placeholder: 'config.optionalRoot' },
+  ],
+  baiduPan: [
+    { key: 'rootPath', labelKey: 'config.rootPath', placeholder: 'config.optionalPath' },
+  ],
+  pan115: [
+    { key: 'rootCid', labelKey: 'config.rootCid', placeholder: 'config.optionalRoot' },
+  ],
+  emby: [
+    { key: 'serverUrl', labelKey: 'config.serverUrl', placeholder: 'http://192.168.1.200:8096', type: 'url', required: true },
+    { key: 'apiKey', labelKey: 'config.apiKey', placeholder: 'API Key', type: 'password', required: true },
+    { key: 'userId', labelKey: 'config.userId', placeholder: 'User ID', required: true },
+  ],
+  jellyfin: [
+    { key: 'serverUrl', labelKey: 'config.serverUrl', placeholder: 'http://192.168.1.200:8096', type: 'url', required: true },
+    { key: 'apiKey', labelKey: 'config.apiKey', placeholder: 'API Key', type: 'password', required: true },
+    { key: 'userId', labelKey: 'config.userId', placeholder: 'User ID', required: true },
+  ],
+}
+
+// Source types that require OAuth flow
+export const OAUTH_SOURCE_TYPES: SourceType[] = ['aliyunDrive', 'baiduPan', 'pan115']

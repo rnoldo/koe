@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useStore } from '@/store'
-import { ChannelIcon, Pause, Play, ChevronUp, X, Settings } from '@/components/icons'
+import { useT } from '@/i18n'
+import { ChannelIcon, Pause, Play, X, Settings } from '@/components/icons'
 import type { Channel, Video } from '@/types'
 
 function formatTime(s: number) {
@@ -23,6 +24,7 @@ export default function PlayPage() {
   const addWatchTime = useStore((s) => s.addWatchTime)
   const isTimeLimitReached = useStore((s) => s.isTimeLimitReached)
   const isWithinAllowedTime = useStore((s) => s.isWithinAllowedTime)
+  const t = useT()
 
   const sorted = [...channels].sort((a, b) => a.sortOrder - b.sortOrder)
 
@@ -41,7 +43,6 @@ export default function PlayPage() {
   const channel = sorted[channelIndex] as Channel | undefined
   const channelVideos = channel ? channel.videoIds.map((id) => videos.find((v) => v.id === id)).filter(Boolean) as Video[] : []
 
-  // Determine current video from playback state
   const pb = channel ? playbackStates[channel.id] : undefined
   const [videoIndex, setVideoIndex] = useState(() => {
     if (pb && channel) {
@@ -56,7 +57,6 @@ export default function PlayPage() {
   const watchTimerRef = useRef<ReturnType<typeof setInterval>>(null)
   const controlsTimerRef = useRef<ReturnType<typeof setTimeout>>(null)
 
-  // Restore playback position when channel changes
   useEffect(() => {
     if (!channel) return
     const saved = playbackStates[channel.id]
@@ -71,7 +71,6 @@ export default function PlayPage() {
     updateSettings({ lastChannelId: channel.id })
   }, [channel?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Simulate playback progress
   useEffect(() => {
     if (!isPlaying || !currentVideo || isLocked) {
       if (timerRef.current) clearInterval(timerRef.current)
@@ -81,7 +80,6 @@ export default function PlayPage() {
       setCurrentTime((t) => {
         const next = t + 1
         if (next >= currentVideo.duration) {
-          // Auto-advance to next video
           setVideoIndex((i) => (i + 1) % channelVideos.length)
           return 0
         }
@@ -91,7 +89,6 @@ export default function PlayPage() {
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [isPlaying, currentVideo?.id, isLocked]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Save playback state periodically
   useEffect(() => {
     if (!channel || !currentVideo) return
     const save = () => {
@@ -105,12 +102,10 @@ export default function PlayPage() {
     return () => { clearInterval(interval); save() }
   }, [channel?.id, currentVideo?.id, currentTime]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Watch time tracking
   useEffect(() => {
     if (!isPlaying || isLocked) return
     watchTimerRef.current = setInterval(() => {
       addWatchTime(10)
-      // Check limits
       if (isTimeLimitReached() || !isWithinAllowedTime()) {
         setIsLocked(true)
         setIsPlaying(false)
@@ -119,7 +114,6 @@ export default function PlayPage() {
     return () => { if (watchTimerRef.current) clearInterval(watchTimerRef.current) }
   }, [isPlaying, isLocked]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-hide controls
   useEffect(() => {
     if (!showControls) return
     controlsTimerRef.current = setTimeout(() => setShowControls(false), 3000)
@@ -134,7 +128,6 @@ export default function PlayPage() {
     }, 400)
   }, [sorted.length])
 
-  // Touch/swipe handling
   const touchStartRef = useRef<{ x: number; y: number } | null>(null)
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -158,7 +151,6 @@ export default function PlayPage() {
     touchStartRef.current = null
   }
 
-  // Keyboard controls
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (isLocked) return
@@ -184,23 +176,22 @@ export default function PlayPage() {
   if (!channel || channelVideos.length === 0) {
     return (
       <div className="h-full flex flex-col items-center justify-center gap-4 bg-black text-white">
-        <p className="text-xl">没有可播放的内容</p>
+        <p className="text-xl">{t('play.noContent')}</p>
         <button onClick={() => router.push('/kids')} className="text-primary underline cursor-pointer">
-          返回频道选择
+          {t('play.backToChannels')}
         </button>
       </div>
     )
   }
 
-  // Lock screen
   if (isLocked) {
     return (
       <div className="h-full flex flex-col items-center justify-center gap-6 bg-gradient-to-b from-[#2C2C2C] to-[#1a1a1a] text-white">
         <div className="text-6xl mb-2">🌙</div>
-        <h1 className="text-2xl">今天的观看时间结束啦</h1>
-        <p className="text-gray">休息一下，明天再来看吧！</p>
+        <h1 className="text-2xl">{t('play.timesUp')}</h1>
+        <p className="text-gray">{t('play.restHint')}</p>
         <div className="mt-8 flex flex-col items-center gap-3">
-          <p className="text-sm text-gray">家长解锁</p>
+          <p className="text-sm text-gray">{t('play.parentUnlock')}</p>
           <div className="flex gap-2">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((n) => (
               <button
@@ -217,17 +208,17 @@ export default function PlayPage() {
               onClick={() => setPinInput('')}
               className="px-4 py-2 rounded-lg bg-white/10 text-sm cursor-pointer"
             >
-              清除
+              {t('common.clear')}
             </button>
             <button
               onClick={handleUnlock}
               className="px-4 py-2 rounded-lg bg-primary text-sm cursor-pointer"
             >
-              解锁
+              {t('common.unlock')}
             </button>
           </div>
           <p className="text-xs text-gray mt-1">
-            {pinInput ? '●'.repeat(pinInput.length) : '输入 PIN 解锁'}
+            {pinInput ? '●'.repeat(pinInput.length) : t('play.enterPin')}
           </p>
         </div>
       </div>
@@ -270,7 +261,6 @@ export default function PlayPage() {
           className="absolute inset-0 z-20 flex flex-col justify-between"
           onClick={() => setShowControls(false)}
         >
-          {/* Top bar */}
           <div className="flex items-center justify-between p-4 bg-gradient-to-b from-black/60 to-transparent">
             <div className="flex items-center gap-3">
               <ChannelIcon name={channel.iconName} color="white" size={20} />
@@ -284,7 +274,6 @@ export default function PlayPage() {
             </button>
           </div>
 
-          {/* Center play/pause */}
           <div className="flex items-center justify-center">
             <button
               onClick={(e) => { e.stopPropagation(); setIsPlaying((p) => !p) }}
@@ -298,20 +287,18 @@ export default function PlayPage() {
             </button>
           </div>
 
-          {/* Bottom bar */}
           <div className="p-4 bg-gradient-to-t from-black/60 to-transparent">
             <p className="text-white/80 text-sm text-center">{currentVideo?.title}</p>
-            {/* Swipe hints */}
             <div className="flex justify-center gap-6 mt-2 text-white/30 text-xs">
-              <span>← 上一台</span>
-              <span>↑ 节目单</span>
-              <span>下一台 →</span>
+              <span>{t('play.prevChannel')}</span>
+              <span>{t('play.playlist')}</span>
+              <span>{t('play.nextChannel')}</span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Channel switch arrows (click zones) */}
+      {/* Channel switch arrows */}
       <button
         className="absolute left-0 top-0 bottom-0 w-16 z-10 cursor-pointer opacity-0 hover:opacity-100 flex items-center justify-center"
         onClick={() => switchChannel(-1)}
@@ -335,7 +322,7 @@ export default function PlayPage() {
           <div className="flex items-center justify-between p-4 border-b border-white/10">
             <div className="flex items-center gap-3">
               <ChannelIcon name={channel.iconName} color={channel.iconColor} size={20} />
-              <span className="text-white">{channel.name} · 节目单</span>
+              <span className="text-white">{channel.name} · {t('play.playlistTitle')}</span>
             </div>
             <button
               onClick={() => setShowPlaylist(false)}
@@ -371,7 +358,6 @@ export default function PlayPage() {
         </div>
       )}
 
-      {/* Settings shortcut */}
       <button
         onClick={() => router.push('/admin')}
         className="absolute bottom-4 right-4 z-10 text-white/10 hover:text-white/40 cursor-pointer transition-colors"
@@ -379,7 +365,6 @@ export default function PlayPage() {
         <Settings size={16} />
       </button>
 
-      {/* Progress bar (thin, at the very bottom) */}
       {currentVideo && (
         <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/10 z-10">
           <div

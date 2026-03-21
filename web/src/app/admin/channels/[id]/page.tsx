@@ -3,9 +3,10 @@
 import { useState, useMemo, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { useStore } from '@/store'
+import { useT } from '@/i18n'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ChannelIcon, ArrowLeft, Search, Plus, X, GripVertical, Check, Trash2 } from '@/components/icons'
+import { ChannelIcon, ArrowLeft, Search, Plus, X, GripVertical } from '@/components/icons'
 import { CHANNEL_ICONS, CHANNEL_COLORS } from '@/types'
 import {
   DndContext,
@@ -21,6 +22,12 @@ import {
   useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+
+function formatTime(s: number) {
+  const m = Math.floor(s / 60)
+  const sec = Math.floor(s % 60)
+  return `${m}:${sec.toString().padStart(2, '0')}`
+}
 
 function SortableVideoItem({
   video,
@@ -38,23 +45,20 @@ function SortableVideoItem({
     opacity: isDragging ? 0.5 : 1,
   }
 
-  const m = Math.floor(video.duration / 60)
-  const s = Math.floor(video.duration % 60)
-
   return (
-    <div ref={setNodeRef} style={style} className="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray/10">
-      <button {...attributes} {...listeners} className="text-gray cursor-grab active:cursor-grabbing">
-        <GripVertical size={14} />
+    <div ref={setNodeRef} style={style} className="flex items-center gap-2.5 p-2 bg-surface rounded-lg border border-border/60 group">
+      <button {...attributes} {...listeners} className="text-gray-light cursor-grab active:cursor-grabbing">
+        <GripVertical size={13} />
       </button>
       <div
-        className="w-16 h-10 rounded flex items-center justify-center text-white/60 text-xs shrink-0"
+        className="w-14 h-9 rounded flex items-center justify-center text-white/60 text-[10px] shrink-0"
         style={{ backgroundColor: video.thumbnailColor }}
       >
-        {m}:{s.toString().padStart(2, '0')}
+        {formatTime(video.duration)}
       </div>
-      <span className="text-sm flex-1 truncate">{video.title}</span>
-      <button onClick={onRemove} className="text-gray hover:text-red-500 cursor-pointer">
-        <X size={14} />
+      <span className="text-[13px] flex-1 truncate">{video.title}</span>
+      <button onClick={onRemove} className="text-gray-light hover:text-red-400 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
+        <X size={13} />
       </button>
     </div>
   )
@@ -62,12 +66,16 @@ function SortableVideoItem({
 
 export default function ChannelEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
+  const isNew = id === 'new'
   const router = useRouter()
   const channels = useStore((s) => s.channels)
   const videos = useStore((s) => s.videos)
+  const sources = useStore((s) => s.sources)
   const updateChannel = useStore((s) => s.updateChannel)
+  const addChannel = useStore((s) => s.addChannel)
+  const t = useT()
 
-  const channel = channels.find((c) => c.id === id)
+  const channel = isNew ? null : channels.find((c) => c.id === id)
 
   const [name, setName] = useState(channel?.name || '')
   const [iconName, setIconName] = useState(channel?.iconName || 'tv')
@@ -75,36 +83,43 @@ export default function ChannelEditorPage({ params }: { params: Promise<{ id: st
   const [volume, setVolume] = useState(channel?.defaultVolume || 60)
   const [selectedVideoIds, setSelectedVideoIds] = useState<string[]>(channel?.videoIds || [])
   const [search, setSearch] = useState('')
+  const [sourceFilter, setSourceFilter] = useState<string | null>(null)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   const availableVideos = useMemo(() => {
     let result = videos.filter((v) => !selectedVideoIds.includes(v.id))
+    if (sourceFilter) result = result.filter((v) => v.sourceId === sourceFilter)
     if (search) {
       const q = search.toLowerCase()
       result = result.filter((v) => v.title.toLowerCase().includes(q))
     }
     return result
-  }, [videos, selectedVideoIds, search])
+  }, [videos, selectedVideoIds, search, sourceFilter])
 
   const selectedVideos = useMemo(
     () => selectedVideoIds.map((id) => videos.find((v) => v.id === id)).filter(Boolean) as typeof videos,
     [selectedVideoIds, videos]
   )
 
-  if (!channel) {
+  if (!isNew && !channel) {
     return (
       <div className="text-center py-16 text-gray">
-        <p>频道不存在</p>
-        <button onClick={() => router.push('/admin/channels')} className="text-primary underline mt-2 cursor-pointer">
-          返回
+        <p className="text-sm">{t('channels.channelNotExist')}</p>
+        <button onClick={() => router.push('/admin/channels')} className="text-primary text-sm mt-2 cursor-pointer hover:underline">
+          {t('common.back')}
         </button>
       </div>
     )
   }
 
   const handleSave = () => {
-    updateChannel(id, { name, iconName, iconColor, defaultVolume: volume, videoIds: selectedVideoIds })
+    if (!name.trim()) return
+    if (isNew) {
+      addChannel({ name, iconName, iconColor, defaultVolume: volume, videoIds: selectedVideoIds })
+    } else {
+      updateChannel(id, { name, iconName, iconColor, defaultVolume: volume, videoIds: selectedVideoIds })
+    }
     router.push('/admin/channels')
   }
 
@@ -129,51 +144,54 @@ export default function ChannelEditorPage({ params }: { params: Promise<{ id: st
 
   return (
     <div>
-      <div className="flex items-center gap-4 mb-6">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-6">
         <button onClick={() => router.push('/admin/channels')} className="text-gray hover:text-foreground cursor-pointer">
-          <ArrowLeft size={20} />
+          <ArrowLeft size={18} />
         </button>
-        <h2 className="text-xl font-medium">编辑频道</h2>
+        <h2 className="text-lg font-medium tracking-tight">{isNew ? t('channels.newChannel') : t('channels.editChannel')}</h2>
         <div className="flex-1" />
-        <Button variant="secondary" onClick={() => router.push('/admin/channels')}>取消</Button>
-        <Button onClick={handleSave}>保存</Button>
+        <Button variant="secondary" onClick={() => router.push('/admin/channels')}>{t('common.cancel')}</Button>
+        <Button onClick={handleSave} disabled={!name.trim()}>{isNew ? t('common.create') : t('common.save')}</Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Left: Channel settings */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-xl border border-gray/20 p-5 space-y-4">
+        <div>
+          <div className="bg-surface rounded-xl border border-border p-5 space-y-5">
             <div>
-              <label className="block text-sm text-gray mb-1">频道名称</label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} />
+              <label className="block text-xs text-foreground-secondary mb-1">{t('channels.channelName')}</label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('channels.channelNamePlaceholder')} />
             </div>
 
             <div>
-              <label className="block text-sm text-gray mb-1">图标</label>
-              <div className="flex flex-wrap gap-2">
+              <label className="block text-xs text-foreground-secondary mb-1.5">{t('channels.icon')}</label>
+              <div className="flex flex-wrap gap-1.5">
                 {CHANNEL_ICONS.map((icon) => (
                   <button
                     key={icon}
                     onClick={() => setIconName(icon)}
-                    className={`w-9 h-9 rounded-lg flex items-center justify-center cursor-pointer border ${
-                      iconName === icon ? 'border-primary bg-primary/5' : 'border-gray/20'
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition-all ${
+                      iconName === icon
+                        ? 'bg-primary/8 ring-1.5 ring-primary/40 scale-110'
+                        : 'hover:bg-bg-secondary'
                     }`}
                   >
-                    <ChannelIcon name={icon} color={iconName === icon ? iconColor : '#B1ADA1'} size={16} />
+                    <ChannelIcon name={icon} color={iconName === icon ? iconColor : '#C4C0B8'} size={15} />
                   </button>
                 ))}
               </div>
             </div>
 
             <div>
-              <label className="block text-sm text-gray mb-1">颜色</label>
-              <div className="flex gap-2 flex-wrap">
+              <label className="block text-xs text-foreground-secondary mb-1.5">{t('channels.color')}</label>
+              <div className="flex gap-1.5 flex-wrap">
                 {CHANNEL_COLORS.map((color) => (
                   <button
                     key={color}
                     onClick={() => setIconColor(color)}
-                    className={`w-7 h-7 rounded-full cursor-pointer border-2 ${
-                      iconColor === color ? 'border-foreground scale-110' : 'border-transparent'
+                    className={`w-6 h-6 rounded-full cursor-pointer transition-all ${
+                      iconColor === color ? 'ring-2 ring-offset-1 ring-foreground/30 scale-110' : 'hover:scale-105'
                     }`}
                     style={{ backgroundColor: color }}
                   />
@@ -182,28 +200,33 @@ export default function ChannelEditorPage({ params }: { params: Promise<{ id: st
             </div>
 
             <div>
-              <label className="block text-sm text-gray mb-1">默认音量: {volume}%</label>
+              <label className="block text-xs text-foreground-secondary mb-1">
+                {t('channels.volume')} <span className="text-gray">{volume}%</span>
+              </label>
               <input
                 type="range"
                 min={0}
                 max={100}
                 value={volume}
                 onChange={(e) => setVolume(Number(e.target.value))}
-                className="w-full accent-primary"
+                className="w-full"
               />
             </div>
 
             {/* Preview */}
-            <div className="pt-4 border-t border-gray/10">
-              <p className="text-xs text-gray mb-2">预览</p>
+            <div className="pt-4 border-t border-border">
+              <p className="text-[10px] text-gray uppercase tracking-wider mb-2">{t('common.preview')}</p>
               <div className="flex items-center gap-3">
                 <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: iconColor + '20' }}
+                  className="w-11 h-11 rounded-xl flex items-center justify-center"
+                  style={{ backgroundColor: iconColor + '18' }}
                 >
-                  <ChannelIcon name={iconName} color={iconColor} size={24} />
+                  <ChannelIcon name={iconName} color={iconColor} size={22} />
                 </div>
-                <span className="font-medium" style={{ color: iconColor }}>{name || '未命名'}</span>
+                <div>
+                  <span className="text-sm font-medium" style={{ color: iconColor }}>{name || t('common.untitled')}</span>
+                  <p className="text-[11px] text-gray">{t('common.videos', { count: selectedVideoIds.length })}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -211,51 +234,97 @@ export default function ChannelEditorPage({ params }: { params: Promise<{ id: st
 
         {/* Right: Video picker (2 cols) */}
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Available videos */}
-          <div className="bg-white rounded-xl border border-gray/20 p-4 flex flex-col max-h-[600px]">
-            <h3 className="font-medium mb-3">视频库</h3>
-            <div className="relative mb-3">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="搜索..."
-                className="pl-8 text-sm py-1.5"
-              />
+          {/* Available videos — click to add directly */}
+          <div className="bg-surface rounded-xl border border-border p-4 flex flex-col" style={{ maxHeight: 640 }}>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium">{t('channels.videoLibrary')}</h3>
+              <span className="text-[11px] text-gray">{t('common.available', { count: availableVideos.length })}</span>
             </div>
-            <div className="flex-1 overflow-auto space-y-1.5">
+
+            {/* Search + filter */}
+            <div className="space-y-2 mb-3">
+              <div className="relative">
+                <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-light" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={t('channels.searchVideos')}
+                  className="pl-8 py-1.5 text-[13px]"
+                />
+              </div>
+              {sources.length > 1 && (
+                <div className="flex gap-1 flex-wrap">
+                  <button
+                    onClick={() => setSourceFilter(null)}
+                    className={`px-2 py-0.5 rounded text-[11px] cursor-pointer transition-colors ${
+                      !sourceFilter ? 'bg-primary text-white' : 'bg-bg text-gray hover:text-foreground-secondary'
+                    }`}
+                  >
+                    {t('common.all')}
+                  </button>
+                  {sources.map((src) => (
+                    <button
+                      key={src.id}
+                      onClick={() => setSourceFilter(src.id === sourceFilter ? null : src.id)}
+                      className={`px-2 py-0.5 rounded text-[11px] cursor-pointer transition-colors ${
+                        sourceFilter === src.id ? 'bg-primary text-white' : 'bg-bg text-gray hover:text-foreground-secondary'
+                      }`}
+                    >
+                      {src.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Video list — click to add */}
+            <div className="flex-1 overflow-auto space-y-0.5">
               {availableVideos.map((v) => (
-                <button
+                <div
                   key={v.id}
+                  className="flex items-center gap-2.5 p-2 rounded-lg transition-colors cursor-pointer text-left hover:bg-bg"
                   onClick={() => addVideo(v.id)}
-                  className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-bg transition-colors cursor-pointer text-left"
                 >
                   <div
-                    className="w-14 h-9 rounded flex items-center justify-center text-white/60 text-xs shrink-0"
+                    className="w-12 h-8 rounded flex items-center justify-center text-white/50 text-[10px] shrink-0"
                     style={{ backgroundColor: v.thumbnailColor }}
-                  />
-                  <span className="text-sm flex-1 truncate">{v.title}</span>
-                  <Plus size={14} className="text-gray shrink-0" />
-                </button>
+                  >
+                    {formatTime(v.duration)}
+                  </div>
+                  <span className="text-[13px] flex-1 truncate">{v.title}</span>
+                  <Plus size={12} className="text-gray-light shrink-0" />
+                </div>
               ))}
               {availableVideos.length === 0 && (
-                <p className="text-xs text-gray text-center py-4">没有更多视频</p>
+                <p className="text-xs text-gray text-center py-6">{t('channels.noMoreVideos')}</p>
               )}
             </div>
           </div>
 
-          {/* Selected videos */}
-          <div className="bg-white rounded-xl border border-gray/20 p-4 flex flex-col max-h-[600px]">
-            <h3 className="font-medium mb-3">
-              已选视频 <span className="text-gray font-normal">({selectedVideoIds.length})</span>
-            </h3>
+          {/* Selected videos — sortable */}
+          <div className="bg-surface rounded-xl border border-border p-4 flex flex-col" style={{ maxHeight: 640 }}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium">
+                {t('common.selected')} <span className="text-gray font-normal">{selectedVideoIds.length}</span>
+              </h3>
+              {selectedVideoIds.length > 0 && (
+                <button
+                  onClick={() => setSelectedVideoIds([])}
+                  className="text-[11px] text-gray hover:text-red-400 cursor-pointer"
+                >
+                  {t('channels.clearAll')}
+                </button>
+              )}
+            </div>
             <div className="flex-1 overflow-auto">
               {selectedVideos.length === 0 ? (
-                <p className="text-xs text-gray text-center py-8">从左侧添加视频</p>
+                <div className="text-center py-10">
+                  <p className="text-xs text-gray">{t('channels.clickToAdd')}</p>
+                </div>
               ) : (
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                   <SortableContext items={selectedVideoIds} strategy={verticalListSortingStrategy}>
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       {selectedVideos.map((v) => (
                         <SortableVideoItem key={v.id} video={v} onRemove={() => removeVideo(v.id)} />
                       ))}

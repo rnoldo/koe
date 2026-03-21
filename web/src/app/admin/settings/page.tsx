@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useStore } from '@/store'
+import { useT } from '@/i18n'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Shield, Clock, Volume2, Check } from '@/components/icons'
@@ -11,6 +12,7 @@ export default function SettingsPage() {
   const updateSettings = useStore((s) => s.updateSettings)
   const getTodayWatchTime = useStore((s) => s.getTodayWatchTime)
   const [saved, setSaved] = useState(false)
+  const t = useT()
 
   const [pin, setPin] = useState(settings.pin)
   const [dailyLimit, setDailyLimit] = useState(settings.dailyLimitMinutes)
@@ -33,46 +35,55 @@ export default function SettingsPage() {
   const todayMinutes = Math.floor(getTodayWatchTime() / 60)
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-xl">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-medium">设置</h2>
+        <h2 className="text-lg font-medium tracking-tight">{t('settings.title')}</h2>
         <Button onClick={handleSave}>
-          {saved ? <><Check size={16} />已保存</> : '保存设置'}
+          {saved ? <><Check size={14} />{t('settings.saved')}</> : t('settings.saveSettings')}
         </Button>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* PIN */}
-        <div className="bg-white rounded-xl border border-gray/20 p-5">
-          <div className="flex items-center gap-3 mb-4">
-            <Shield size={20} className="text-primary" />
-            <h3 className="font-medium">家长 PIN 码</h3>
+        <div className="bg-surface rounded-xl border border-border p-5">
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="w-7 h-7 rounded-lg bg-primary/8 flex items-center justify-center">
+              <Shield size={14} className="text-primary" />
+            </div>
+            <h3 className="text-sm font-medium">{t('settings.parentPin')}</h3>
           </div>
-          <div className="max-w-xs">
+          <div className="max-w-48">
             <Input
               value={pin}
               onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              placeholder="4-6 位数字"
+              placeholder={t('settings.pinPlaceholder')}
               maxLength={6}
               type="password"
             />
-            <p className="text-xs text-gray mt-1">用于进入管理后台和解锁儿童端</p>
+            <p className="text-[11px] text-gray mt-1.5">{t('settings.pinHint')}</p>
           </div>
         </div>
 
         {/* Watch time */}
-        <div className="bg-white rounded-xl border border-gray/20 p-5">
-          <div className="flex items-center gap-3 mb-4">
-            <Clock size={20} className="text-primary" />
-            <h3 className="font-medium">观看时长控制</h3>
-            <span className="text-sm text-gray ml-auto">今日已看 {todayMinutes} 分钟</span>
+        <div className="bg-surface rounded-xl border border-border p-5">
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="w-7 h-7 rounded-lg bg-primary/8 flex items-center justify-center">
+              <Clock size={14} className="text-primary" />
+            </div>
+            <h3 className="text-sm font-medium">{t('settings.watchTimeControl')}</h3>
+            <span className="text-[11px] text-gray ml-auto px-2 py-0.5 bg-bg rounded-md">
+              {t('settings.todayWatched', { count: todayMinutes })}
+            </span>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div>
-              <label className="block text-sm text-gray mb-2">
-                每日限额: {dailyLimit ? `${dailyLimit} 分钟` : '不限制'}
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs text-foreground-secondary">{t('settings.dailyLimit')}</label>
+                <span className="text-xs text-foreground font-medium">
+                  {dailyLimit ? t('settings.minutesLabel', { count: dailyLimit }) : t('settings.noLimit')}
+                </span>
+              </div>
               <div className="flex items-center gap-3">
                 <input
                   type="range"
@@ -84,28 +95,28 @@ export default function SettingsPage() {
                     const v = Number(e.target.value)
                     setDailyLimit(v === 0 ? null : v)
                   }}
-                  className="flex-1 accent-primary"
+                  className="flex-1"
                 />
                 <button
                   onClick={() => setDailyLimit(null)}
-                  className={`px-3 py-1 rounded text-xs cursor-pointer ${
-                    dailyLimit === null ? 'bg-primary text-white' : 'bg-gray/10 text-gray'
+                  className={`px-2.5 py-1 rounded-md text-[11px] cursor-pointer transition-all ${
+                    dailyLimit === null ? 'bg-primary text-white shadow-sm' : 'bg-bg text-gray hover:text-foreground-secondary'
                   }`}
                 >
-                  不限制
+                  {t('settings.noLimit')}
                 </button>
               </div>
-              <div className="flex justify-between text-xs text-gray mt-1">
-                <span>15分钟</span>
-                <span>1小时</span>
-                <span>2小时</span>
-                <span>4小时</span>
+              <div className="flex justify-between text-[10px] text-gray-light mt-1 px-0.5">
+                <span>{t('settings.15min')}</span>
+                <span>{t('settings.1hour')}</span>
+                <span>{t('settings.2hours')}</span>
+                <span>{t('settings.4hours')}</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm text-gray mb-1">允许开始时间</label>
+                <label className="block text-xs text-foreground-secondary mb-1">{t('settings.allowedStart')}</label>
                 <Input
                   type="time"
                   value={startTime}
@@ -114,7 +125,7 @@ export default function SettingsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray mb-1">允许结束时间</label>
+                <label className="block text-xs text-foreground-secondary mb-1">{t('settings.allowedEnd')}</label>
                 <Input
                   type="time"
                   value={endTime}
@@ -123,20 +134,23 @@ export default function SettingsPage() {
                 />
               </div>
             </div>
-            <p className="text-xs text-gray">留空表示不限制时间段。超时后儿童端将自动锁定。</p>
+            <p className="text-[11px] text-gray">{t('settings.timeHint')}</p>
           </div>
         </div>
 
         {/* Volume */}
-        <div className="bg-white rounded-xl border border-gray/20 p-5">
-          <div className="flex items-center gap-3 mb-4">
-            <Volume2 size={20} className="text-primary" />
-            <h3 className="font-medium">全局音量限制</h3>
+        <div className="bg-surface rounded-xl border border-border p-5">
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="w-7 h-7 rounded-lg bg-primary/8 flex items-center justify-center">
+              <Volume2 size={14} className="text-primary" />
+            </div>
+            <h3 className="text-sm font-medium">{t('settings.globalVolume')}</h3>
           </div>
-          <div>
-            <label className="block text-sm text-gray mb-2">
-              最大音量: {maxVolume}%
-            </label>
+          <div className="max-w-xs">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs text-foreground-secondary">{t('settings.maxVolume')}</label>
+              <span className="text-xs text-foreground font-medium">{maxVolume}%</span>
+            </div>
             <input
               type="range"
               min={10}
@@ -144,7 +158,7 @@ export default function SettingsPage() {
               step={5}
               value={maxVolume}
               onChange={(e) => setMaxVolume(Number(e.target.value))}
-              className="w-full accent-primary max-w-sm"
+              className="w-full"
             />
           </div>
         </div>

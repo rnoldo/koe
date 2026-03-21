@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { MediaSource, Video, Channel, PlaybackState, WatchTimeRecord, AppSettings } from '@/types'
 import { MOCK_SOURCES, MOCK_VIDEOS, MOCK_CHANNELS, DEFAULT_SETTINGS } from '@/data/mock'
+type Locale = 'en' | 'zh'
 
 interface AppStore {
   // Data
@@ -11,6 +12,10 @@ interface AppStore {
   playbackStates: Record<string, PlaybackState> // keyed by channelId
   watchTimeRecords: WatchTimeRecord[]
   settings: AppSettings
+
+  // Locale
+  locale: Locale
+  setLocale: (locale: Locale) => void
 
   // Auth
   isAdminAuthenticated: boolean
@@ -64,6 +69,8 @@ export const useStore = create<AppStore>()(
       playbackStates: {},
       watchTimeRecords: [],
       settings: DEFAULT_SETTINGS,
+      locale: 'en' as Locale,
+      setLocale: (locale: Locale) => set({ locale }),
       isAdminAuthenticated: false,
 
       authenticateAdmin: (pin: string) => {

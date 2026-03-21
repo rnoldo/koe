@@ -7,6 +7,7 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useStore } from '@/store'
+import { SOURCE_CONFIG_FIELDS, OAUTH_SOURCE_TYPES } from '@/types'
 
 // Reset store to fresh state before each test
 function resetStore() {
@@ -339,6 +340,43 @@ describe('视频库 — README 2.2 视频库管理', () => {
 
     useStore.getState().deleteSource(src.id)
     expect(useStore.getState().getVideosBySource(src.id).length).toBe(0)
+  })
+})
+
+describe('媒体源配置字段定义', () => {
+  it('所有 8 种源类型都有配置字段定义', () => {
+    const types = ['local', 'webdav', 'smb', 'aliyunDrive', 'baiduPan', 'pan115', 'emby', 'jellyfin'] as const
+    types.forEach((type) => {
+      expect(SOURCE_CONFIG_FIELDS[type]).toBeDefined()
+      expect(Array.isArray(SOURCE_CONFIG_FIELDS[type])).toBe(true)
+    })
+  })
+
+  it('WebDAV 要求 URL、用户名、密码', () => {
+    const keys = SOURCE_CONFIG_FIELDS.webdav.map((f) => f.key)
+    expect(keys).toContain('url')
+    expect(keys).toContain('username')
+    expect(keys).toContain('password')
+  })
+
+  it('SMB 要求主机和共享名', () => {
+    const keys = SOURCE_CONFIG_FIELDS.smb.map((f) => f.key)
+    expect(keys).toContain('host')
+    expect(keys).toContain('share')
+  })
+
+  it('OAuth 类型包含阿里云盘、百度网盘、115', () => {
+    expect(OAUTH_SOURCE_TYPES).toContain('aliyunDrive')
+    expect(OAUTH_SOURCE_TYPES).toContain('baiduPan')
+    expect(OAUTH_SOURCE_TYPES).toContain('pan115')
+  })
+
+  it('Emby/Jellyfin 要求服务器地址和 API Key', () => {
+    (['emby', 'jellyfin'] as const).forEach((type) => {
+      const keys = SOURCE_CONFIG_FIELDS[type].map((f) => f.key)
+      expect(keys).toContain('serverUrl')
+      expect(keys).toContain('apiKey')
+    })
   })
 })
 

@@ -3,7 +3,7 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'KidsTV Pad',
-  description: '儿童电视 — 由家长掌控的纯净观看环境',
+  description: 'KidsTV — A pure viewing environment controlled by parents',
 }
 
 export default function RootLayout({
@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="zh-CN" className="h-full">
+    <html lang="en" className="h-full">
       <body className="h-full font-serif">{children}</body>
     </html>
   )
