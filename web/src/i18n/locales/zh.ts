@@ -69,6 +69,18 @@ const zh = {
   'sources.noSourcesHint': '点击上方按钮添加第一个媒体源',
   'sources.lastScan': '上次扫描',
   'sources.authComplete': '完成授权后可配置以下可选项',
+  'sources.sourceNotExist': '媒体源不存在',
+  'sources.rescan': '重新扫描',
+  'sources.scanning': '扫描中...',
+  'sources.createdAt': '创建于',
+  'sources.status': '状态',
+  'sources.statusIdle': '就绪',
+  'sources.statusScanning': '扫描中',
+  'sources.statusError': '错误',
+  'sources.videoList': '该媒体源的视频',
+  'sources.noVideos': '该媒体源暂无视频',
+  'sources.config': '配置信息',
+  'sources.videoCount': '视频数',
 
   // Source types
   'sourceType.local': '本地目录',

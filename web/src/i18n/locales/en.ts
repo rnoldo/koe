@@ -69,6 +69,18 @@ const en = {
   'sources.noSourcesHint': 'Click the button above to add your first source',
   'sources.lastScan': 'Last scan',
   'sources.authComplete': 'Complete authorization to configure optional fields below',
+  'sources.sourceNotExist': 'Source does not exist',
+  'sources.rescan': 'Rescan',
+  'sources.scanning': 'Scanning...',
+  'sources.createdAt': 'Created',
+  'sources.status': 'Status',
+  'sources.statusIdle': 'Ready',
+  'sources.statusScanning': 'Scanning',
+  'sources.statusError': 'Error',
+  'sources.videoList': 'Videos from this source',
+  'sources.noVideos': 'No videos found in this source',
+  'sources.config': 'Configuration',
+  'sources.videoCount': 'Videos',
 
   // Source types
   'sourceType.local': 'Local',

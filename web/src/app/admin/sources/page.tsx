@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useStore } from '@/store'
 import { useT } from '@/i18n'
 import { Button } from '@/components/ui/button'
@@ -129,6 +130,7 @@ const SOURCE_TYPE_ICONS: Record<SourceType, string> = {
 }
 
 export default function SourcesPage() {
+  const router = useRouter()
   const sources = useStore((s) => s.sources)
   const addSource = useStore((s) => s.addSource)
   const deleteSource = useStore((s) => s.deleteSource)
@@ -241,7 +243,10 @@ export default function SourcesPage() {
               key={src.id}
               className="bg-surface rounded-xl border border-border p-4 flex items-center justify-between hover:shadow-sm transition-shadow"
             >
-              <div className="flex items-center gap-3.5">
+              <div
+                className="flex items-center gap-3.5 flex-1 cursor-pointer"
+                onClick={() => router.push(`/admin/sources/${src.id}`)}
+              >
                 <div className="relative">
                   <span className="text-xl">{SOURCE_TYPE_ICONS[src.type]}</span>
                   <div className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full ring-2 ring-surface ${statusIndicator(src.scanStatus)}`} />
