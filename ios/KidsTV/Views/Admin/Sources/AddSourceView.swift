@@ -97,14 +97,47 @@ struct AddSourceView: View {
         case .smb:
             TextField("Host", text: Binding(get: { config.host ?? "" }, set: { config.host = $0 }))
             TextField("Share", text: Binding(get: { config.share ?? "" }, set: { config.share = $0 }))
+            TextField("Path (optional)", text: Binding(get: { config.smbPath ?? "" }, set: { config.smbPath = $0.isEmpty ? nil : $0 }))
             TextField("Username", text: usernameBinding)
             passwordField
         case .emby, .jellyfin:
             TextField("Server URL", text: serverUrlBinding)
             TextField("API Key", text: Binding(get: { config.apiKey ?? "" }, set: { config.apiKey = $0 }))
             TextField("User ID", text: Binding(get: { config.userId ?? "" }, set: { config.userId = $0 }))
-        case .aliyunDrive, .baiduPan, .pan115:
+        case .aliyunDrive:
+            oauthSignIn(
+                label: "Aliyun Drive",
+                isSignedIn: config.accessToken != nil,
+                action: { Task { await signInAliyun() } }
+            )
             TextField("Root Folder ID (optional)", text: Binding(
+                get: { config.rootFolderId ?? "" },
+                set: { config.rootFolderId = $0.isEmpty ? nil : $0 }
+            ))
+        case .baiduPan:
+            oauthSignIn(
+                label: "Baidu Pan",
+                isSignedIn: config.accessToken != nil,
+                action: { Task { await signInBaidu() } }
+            )
+            TextField("Root Folder ID (optional)", text: Binding(
+                get: { config.rootFolderId ?? "" },
+                set: { config.rootFolderId = $0.isEmpty ? nil : $0 }
+            ))
+        case .pan115:
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Paste cookies from a logged-in 115.com browser session")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                TextEditor(text: Binding(
+                    get: { config.cookies ?? "" },
+                    set: { config.cookies = $0.isEmpty ? nil : $0 }
+                ))
+                .frame(minHeight: 80)
+                .font(.caption)
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.secondary.opacity(0.3)))
+            }
+            TextField("Root Folder ID (optional, 0 = root)", text: Binding(
                 get: { config.rootFolderId ?? "" },
                 set: { config.rootFolderId = $0.isEmpty ? nil : $0 }
             ))
@@ -142,5 +175,68 @@ struct AddSourceView: View {
         let source = MediaSource(name: name, type: type, config: config)
         store.addSource(source)
         dismiss()
+    }
+
+    // MARK: - OAuth
+
+    private func oauthSignIn(label: String, isSignedIn: Bool, action: @escaping () -> Void) -> some View {
+        HStack {
+            if isSignedIn {
+                Label("Signed in", systemImage: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+            } else {
+                Button(action: action) {
+                    Label("Sign in to \(label)", systemImage: "person.badge.key")
+                }
+            }
+        }
+    }
+
+    @MainActor
+    private func signInAliyun() async {
+        do {
+            let code = try await OAuthManager.shared.authenticate(
+                authURL: AliyunDriveScanner.authURL,
+                callbackScheme: AliyunDriveScanner.callbackScheme
+            )
+            let tokens = try await OAuthManager.shared.exchangeToken(
+                tokenURL: AliyunDriveScanner.tokenURL,
+                code: code,
+                clientId: AliyunDriveScanner.clientId,
+                clientSecret: nil,
+                redirectURI: AliyunDriveScanner.redirectURI
+            )
+            config.accessToken = tokens.accessToken
+            config.refreshToken = tokens.refreshToken
+            if let exp = tokens.expiresIn {
+                config.tokenExpiry = Date().addingTimeInterval(TimeInterval(exp))
+            }
+        } catch {
+            print("[KidsTV] Aliyun OAuth error: \(error)")
+        }
+    }
+
+    @MainActor
+    private func signInBaidu() async {
+        do {
+            let code = try await OAuthManager.shared.authenticate(
+                authURL: BaiduPanScanner.authURL,
+                callbackScheme: BaiduPanScanner.callbackScheme
+            )
+            let tokens = try await OAuthManager.shared.exchangeToken(
+                tokenURL: BaiduPanScanner.tokenURL,
+                code: code,
+                clientId: BaiduPanScanner.clientId,
+                clientSecret: BaiduPanScanner.clientSecret,
+                redirectURI: BaiduPanScanner.redirectURI
+            )
+            config.accessToken = tokens.accessToken
+            config.refreshToken = tokens.refreshToken
+            if let exp = tokens.expiresIn {
+                config.tokenExpiry = Date().addingTimeInterval(TimeInterval(exp))
+            }
+        } catch {
+            print("[KidsTV] Baidu OAuth error: \(error)")
+        }
     }
 }

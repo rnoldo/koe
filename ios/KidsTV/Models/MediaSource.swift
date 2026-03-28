@@ -47,6 +47,14 @@ struct SourceConfig: Codable {
     var userId: String?
     // Cloud drives
     var rootFolderId: String?
+    // OAuth tokens (for cloud drives)
+    var accessToken: String?
+    var refreshToken: String?
+    var tokenExpiry: Date?
+    // 115 Pan cookie auth
+    var cookies: String?
+    // SMB sub-path within share
+    var smbPath: String?
 }
 
 struct MediaSource: Identifiable, Codable {

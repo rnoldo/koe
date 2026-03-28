@@ -4,11 +4,14 @@ import AVFoundation
 struct VideoPlayerView: UIViewRepresentable {
     let video: Video
     let volume: Double
+    var streamURL: URL?             // resolved streaming URL (overrides remotePath)
+    var streamHeaders: [String: String]?  // auth headers for remote playback
     @Binding var currentTime: TimeInterval
     @Binding var isPlaying: Bool
     let onFinished: () -> Void
 
     func makeUIView(context: Context) -> PlayerUIView {
+        print("[KidsTV] makeUIView for video: \(video.title) id: \(video.id)")
         let view = PlayerUIView()
         view.onFinished = onFinished
         view.onTimeUpdate = { t in currentTime = t }
@@ -16,15 +19,17 @@ struct VideoPlayerView: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: PlayerUIView, context: Context) {
-        // Only reconfigure if the video changed
         if uiView.currentVideoId != video.id {
-            uiView.configure(with: video, volume: volume, startTime: currentTime)
+            print("[KidsTV] updateUIView: configuring new video \(video.title)")
+            uiView.httpHeaders = streamHeaders
+            uiView.configure(with: video, volume: volume, startTime: currentTime, overrideURL: streamURL)
         }
         uiView.setPlaying(isPlaying)
         uiView.setVolume(volume)
     }
 
     static func dismantleUIView(_ uiView: PlayerUIView, coordinator: ()) {
+        print("[KidsTV] dismantleUIView")
         uiView.teardown()
     }
 }
@@ -32,47 +37,61 @@ struct VideoPlayerView: UIViewRepresentable {
 final class PlayerUIView: UIView {
     var onFinished: (() -> Void)?
     var onTimeUpdate: ((TimeInterval) -> Void)?
+    var httpHeaders: [String: String]?
     private(set) var currentVideoId: String?
 
     private var player: AVPlayer?
     private var timeObserver: Any?
     private var statusObservation: NSKeyValueObservation?
-    private var errorLabel: UILabel?
+    private var debugLabel: UILabel?
 
     override class var layerClass: AnyClass { AVPlayerLayer.self }
     private var avPlayerLayer: AVPlayerLayer { layer as! AVPlayerLayer }
 
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        avPlayerLayer.frame = bounds
-        errorLabel?.frame = bounds
-    }
-
-    func configure(with video: Video, volume: Double, startTime: TimeInterval) {
+    func configure(with video: Video, volume: Double, startTime: TimeInterval, overrideURL: URL? = nil) {
         teardown()
         currentVideoId = video.id
         backgroundColor = UIColor(Color(hex: video.thumbnailColor))
         avPlayerLayer.videoGravity = .resizeAspect
-        hideError()
+        showDebug("Loading: \(video.title)")
 
         let url: URL
-        if video.remotePath.hasPrefix("http://") || video.remotePath.hasPrefix("https://") {
+        let isRemote: Bool
+        if let override = overrideURL {
+            url = override
+            isRemote = url.scheme == "http" || url.scheme == "https"
+        } else if video.remotePath.hasPrefix("http://") || video.remotePath.hasPrefix("https://") {
             guard let u = URL(string: video.remotePath) else {
-                showError("Invalid URL: \(video.remotePath)")
+                showDebug("ERROR: Invalid URL\n\(video.remotePath)")
                 return
             }
             url = u
+            isRemote = true
         } else {
             url = URL(fileURLWithPath: video.remotePath)
+            isRemote = false
         }
 
-        // Verify file exists before handing to AVPlayer
-        if !url.isFileURL || FileManager.default.fileExists(atPath: url.path) == false && url.isFileURL {
-            showError("File not found:\n\(url.path)")
-            return
+        if !isRemote {
+            let exists = FileManager.default.fileExists(atPath: url.path)
+            print("[KidsTV] File path: \(url.path)")
+            print("[KidsTV] File exists: \(exists)")
+            guard exists else {
+                showDebug("FILE NOT FOUND:\n\(url.path)")
+                return
+            }
+        } else {
+            print("[KidsTV] Remote URL: \(url.absoluteString)")
         }
 
-        let item = AVPlayerItem(url: url)
+        // Use AVURLAsset to support auth headers for remote sources
+        let asset: AVURLAsset
+        if let headers = httpHeaders, !headers.isEmpty {
+            asset = AVURLAsset(url: url, options: ["AVURLAssetHTTPHeaderFieldsKey": headers])
+        } else {
+            asset = AVURLAsset(url: url)
+        }
+        let item = AVPlayerItem(asset: asset)
         let p = AVPlayer(playerItem: item)
         p.volume = Float(volume)
 
@@ -80,13 +99,24 @@ final class PlayerUIView: UIView {
             p.seek(to: CMTime(seconds: startTime, preferredTimescale: 600))
         }
 
-        // Observe for load errors
-        statusObservation = item.observe(\.status, options: [.new]) { [weak self] item, _ in
+        statusObservation = item.observe(\.status, options: [.new, .initial]) { [weak self] item, _ in
             DispatchQueue.main.async {
-                if item.status == .failed {
+                switch item.status {
+                case .readyToPlay:
+                    print("[KidsTV] ✅ Ready to play")
+                    self?.showDebug("Playing: \(video.title)")
+                    // Hide debug after 2 seconds
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        self?.debugLabel?.isHidden = true
+                    }
+                case .failed:
                     let msg = item.error?.localizedDescription ?? "Unknown error"
-                    self?.showError(msg)
-                    print("[KidsTV] AVPlayerItem failed: \(msg)")
+                    print("[KidsTV] ❌ Failed: \(msg)")
+                    self?.showDebug("PLAYBACK ERROR:\n\(msg)")
+                case .unknown:
+                    print("[KidsTV] ⏳ Status: unknown (loading...)")
+                @unknown default:
+                    break
                 }
             }
         }
@@ -108,6 +138,8 @@ final class PlayerUIView: UIView {
 
         avPlayerLayer.player = p
         player = p
+        p.play()
+        print("[KidsTV] Called play()")
     }
 
     func setPlaying(_ playing: Bool) {
@@ -134,23 +166,20 @@ final class PlayerUIView: UIView {
         DispatchQueue.main.async { self.onFinished?() }
     }
 
-    private func showError(_ message: String) {
-        if errorLabel == nil {
+    private func showDebug(_ message: String) {
+        if debugLabel == nil {
             let label = UILabel()
             label.numberOfLines = 0
             label.textAlignment = .center
-            label.textColor = .white
-            label.font = .systemFont(ofSize: 13)
+            label.textColor = .yellow
+            label.font = .boldSystemFont(ofSize: 16)
             label.backgroundColor = UIColor.black.withAlphaComponent(0.7)
+            label.autoresizingMask = [.flexibleWidth, .flexibleHeight]
             addSubview(label)
-            errorLabel = label
+            debugLabel = label
         }
-        errorLabel?.text = "⚠️ \(message)"
-        errorLabel?.isHidden = false
-        setNeedsLayout()
-    }
-
-    private func hideError() {
-        errorLabel?.isHidden = true
+        debugLabel?.text = message
+        debugLabel?.isHidden = false
+        debugLabel?.frame = CGRect(x: 20, y: 20, width: bounds.width - 40, height: 120)
     }
 }

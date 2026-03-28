@@ -9,7 +9,10 @@ struct ChannelsView: View {
         List {
             ForEach(store.sortedChannels) { channel in
                 NavigationLink(destination: ChannelEditorView(channel: channel)) {
-                    ChannelRowView(channel: channel, videoCount: channel.videoIds.count)
+                    ChannelRowView(
+                        channel: channel,
+                        videoCount: channel.videoIds.filter { store.video(id: $0) != nil }.count
+                    )
                 }
             }
             .onDelete { indexSet in

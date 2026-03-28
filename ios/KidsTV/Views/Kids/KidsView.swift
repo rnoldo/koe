@@ -12,6 +12,10 @@ struct KidsView: View {
     @State private var isPlaying = false
     @State private var currentTime: TimeInterval = 0
 
+    // Streaming resolution
+    @State private var resolvedStreamURL: URL?
+    @State private var resolvedStreamHeaders: [String: String]?
+
     // UI state
     @State private var showHUD = false
     @State private var showVideoList = false
@@ -45,11 +49,29 @@ struct KidsView: View {
 
             if channels.isEmpty {
                 emptyState
+            } else if currentVideos.isEmpty {
+                // Channel exists but has no valid videos
+                VStack(spacing: 16) {
+                    Image(systemName: "film.stack")
+                        .font(.system(size: 60))
+                        .foregroundStyle(.white.opacity(0.4))
+                    Text("No videos in this channel")
+                        .foregroundStyle(.white.opacity(0.6))
+                    Text("Channel: \(currentChannel?.name ?? "?") (\(currentChannel?.videoIds.count ?? 0) refs, 0 found)")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.4))
+                    Text("Swipe left/right to try another channel")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.4))
+                }
+                gestureOverlay
             } else if let video = currentVideo, let channel = currentChannel {
                 // Video player layer
                 VideoPlayerView(
                     video: video,
                     volume: min(channel.defaultVolume, store.settings.maxVolume),
+                    streamURL: resolvedStreamURL,
+                    streamHeaders: resolvedStreamHeaders,
                     currentTime: $currentTime,
                     isPlaying: $isPlaying
                 ) {
@@ -122,11 +144,20 @@ struct KidsView: View {
         }
         .ignoresSafeArea()
         .onAppear {
+            print("[KidsTV] channels: \(channels.count), names: \(channels.map(\.name))")
+            print("[KidsTV] channelIndex: \(channelIndex), currentChannel: \(currentChannel?.name ?? "nil")")
+            print("[KidsTV] currentChannel videoIds: \(currentChannel?.videoIds ?? [])")
+            print("[KidsTV] currentVideos resolved: \(currentVideos.count)")
+            print("[KidsTV] currentVideo: \(currentVideo?.title ?? "nil")")
+            print("[KidsTV] total videos in store: \(store.videos.count)")
             restoreState()
             startWatchTimer()
-            isPlaying = true  // auto-start
+            isPlaying = true
+            resolveStream()
         }
         .onDisappear { saveState(); stopWatchTimer() }
+        .onChange(of: videoIndex) { _, _ in resolveStream() }
+        .onChange(of: channelIndex) { _, _ in resolveStream() }
         .animation(.easeInOut(duration: 0.2), value: showHUD)
         .animation(.easeInOut(duration: 0.2), value: showVideoList)
         .animation(.easeInOut(duration: 0.15), value: showPauseIcon)
@@ -203,6 +234,27 @@ struct KidsView: View {
         .background(.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 20))
         .transition(.opacity.combined(with: .scale))
+    }
+
+    // MARK: - Stream Resolution
+
+    private func resolveStream() {
+        guard let video = currentVideo else {
+            resolvedStreamURL = nil
+            resolvedStreamHeaders = nil
+            return
+        }
+        Task {
+            do {
+                let media = try await store.resolvePlaybackURL(for: video)
+                resolvedStreamURL = media.url
+                resolvedStreamHeaders = media.httpHeaders.isEmpty ? nil : media.httpHeaders
+            } catch {
+                print("[KidsTV] Stream resolve failed: \(error)")
+                resolvedStreamURL = nil
+                resolvedStreamHeaders = nil
+            }
+        }
     }
 
     // MARK: - Actions

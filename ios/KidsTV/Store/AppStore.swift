@@ -58,8 +58,13 @@ final class AppStore {
     }
 
     func deleteSource(id: String) {
+        let removedVideoIds = Set(videos.filter { $0.sourceId == id }.map(\.id))
         sources.removeAll { $0.id == id }
         videos.removeAll { $0.sourceId == id }
+        // Clean up orphaned references in channels
+        for i in channels.indices {
+            channels[i].videoIds.removeAll { removedVideoIds.contains($0) }
+        }
         save()
     }
 
@@ -73,9 +78,9 @@ final class AppStore {
             let found: [Video]
             if source.type == .local {
                 found = try await scanLocalSource(source: source)
+            } else if let scanner = ScannerRegistry.scanner(for: source.type) {
+                found = try await scanner.scan(source: source)
             } else {
-                // Placeholder for remote sources — simulate delay
-                try? await Task.sleep(for: .seconds(2))
                 found = []
             }
             // Remove old videos for this source, add new ones
@@ -227,6 +232,17 @@ final class AppStore {
 
     func playbackState(for channelId: String) -> PlaybackState? {
         playbackStates[channelId]
+    }
+
+    // MARK: - Streaming URL Resolution
+
+    func resolvePlaybackURL(for video: Video) async throws -> StreamableMedia {
+        guard let source = sources.first(where: { $0.id == video.sourceId }),
+              let scanner = ScannerRegistry.scanner(for: source.type) else {
+            // Local file fallback
+            return StreamableMedia(url: URL(fileURLWithPath: video.remotePath), httpHeaders: [:])
+        }
+        return try await scanner.streamingURL(for: video, source: source)
     }
 
     // MARK: - Watch Time

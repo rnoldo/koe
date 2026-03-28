@@ -7,18 +7,29 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		037D4BC219EEF3987F784EA9 /* JellyfinScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6DED6638857FDEB168EF4B4 /* JellyfinScanner.swift */; };
 		04ED499CC4ACEE20B152BF0D /* WatchTimeRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBE08F57FFF5E11F21186B86 /* WatchTimeRecord.swift */; };
+		05221FE5DB9576FBFB376F40 /* WebDAVScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 069B1DEB2C910AB7A425B502 /* WebDAVScanner.swift */; };
 		067133F6903E5DF91213B1FD /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1FB5BCDB2CA8AB0514F0BD5 /* VideoPlayerView.swift */; };
 		0CFE4CE41BFE9866EDD1AB1F /* MediaSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21D8DACCF1CA2CB0EA9A6C9B /* MediaSource.swift */; };
 		180B75B8BD0EEBFCFA438B36 /* ChannelEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D6FC2ACFEEF373A064F4711 /* ChannelEditorView.swift */; };
 		1B493DFD5FEF613D309517FF /* PlaybackState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB2D060891B6C8B732A4CD86 /* PlaybackState.swift */; };
 		2D51C2EDA0C664B4C26DF186 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22059F8015D99ECD0285091B /* SettingsView.swift */; };
+		47508EF9A767E2FDADA99812 /* HTTPClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A4C42E7FE3AEA7CBA828E6C /* HTTPClient.swift */; };
 		4B377BE9BD8CC74F22992F91 /* Video.swift in Sources */ = {isa = PBXBuildFile; fileRef = C66279D007D56778117ACD2A /* Video.swift */; };
+		4B9F41870B91F9E926AB73AB /* SMBScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B021F9CA36D6E2D62E30CE /* SMBScanner.swift */; };
 		4C156BCF0FA4B731CFE3F0E0 /* ColorHex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A44AD95AA4EF14716DDA799 /* ColorHex.swift */; };
 		5693381DA1546815F9E46E57 /* VideoListPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 972942F9591126AFF2AC4028 /* VideoListPanel.swift */; };
+		58B0D35A8779ADDD6A6FDF1A /* AliyunDriveScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAEE4337D857CFE00131ED5F /* AliyunDriveScanner.swift */; };
 		634ED785B3E82D28F6D0DDC8 /* KidsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE413789928BB4D8A1061EC3 /* KidsView.swift */; };
 		71DB3B8EFC1434113E38244E /* ChannelsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16FE76E0407CDCF21D812C6A /* ChannelsView.swift */; };
 		75967F09DD518D66701CAA3A /* AddSourceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63DC45EF849028E142590100 /* AddSourceView.swift */; };
+		75CE5EBD16A0E829ACEA9F13 /* ScannerRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02561301B311778CA7D9BFF8 /* ScannerRegistry.swift */; };
+		75F95CDBC26C8A58BEC9B404 /* Pan115Scanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57C9BF470503ABE9BD67785 /* Pan115Scanner.swift */; };
+		7889379F02756410CBAECCD4 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BF24BF6F782346776953978 /* KeychainHelper.swift */; };
+		7A9F5D16116752BFE958C881 /* OAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9C770B9232537802A59D91A /* OAuthManager.swift */; };
+		7C96E43178F02A1A917C9612 /* BaiduPanScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7479FAC694E425E77283626 /* BaiduPanScanner.swift */; };
+		7CFF14431556D68B12814243 /* SourceScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DC19CB2BEAAF0EE1F14A026 /* SourceScanner.swift */; };
 		7E1F1BA69E0D8F95EB7AF687 /* AdminRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AB64AAB0DB6FC84C2C2F51B /* AdminRootView.swift */; };
 		81CBAD75841D7B48071A7BBD /* Channel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD4E134B15DADC36142B245C /* Channel.swift */; };
 		8A58FB8573519C3DEB82AA90 /* NumpadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DB5977497DBECF41918161E /* NumpadView.swift */; };
@@ -32,41 +43,65 @@
 		DB4E14E9511B2AFC8F140EFB /* AppStore+Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED891EE5329FDF53BD0408FB /* AppStore+Persistence.swift */; };
 		DCEA76943DA694372BC779B2 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 463BF61CFB40CC0BBE27823F /* AppSettings.swift */; };
 		E7907B787FD923CFD6F8BFFF /* PINEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A260052D357C9FF5D1C41A6 /* PINEntryView.swift */; };
+		ECCC000AD28C21A512CF448B /* ScannerError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12187516256C4E17A7491BA4 /* ScannerError.swift */; };
 		EEBEDCC2BF75A9139293EF0A /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 9120315D4472BB86D09C90D1 /* Localizable.xcstrings */; };
+		F06EE9B081E9D2E6BEDEADC7 /* EmbyScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52F378F8B29F16DAE2ACBA8D /* EmbyScanner.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		02561301B311778CA7D9BFF8 /* ScannerRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerRegistry.swift; sourceTree = "<group>"; };
 		047726567AC061C8D96FD122 /* SourceDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceDetailView.swift; sourceTree = "<group>"; };
+		069B1DEB2C910AB7A425B502 /* WebDAVScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebDAVScanner.swift; sourceTree = "<group>"; };
 		0D6FC2ACFEEF373A064F4711 /* ChannelEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelEditorView.swift; sourceTree = "<group>"; };
 		0DB5977497DBECF41918161E /* NumpadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumpadView.swift; sourceTree = "<group>"; };
+		12187516256C4E17A7491BA4 /* ScannerError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerError.swift; sourceTree = "<group>"; };
 		16FE76E0407CDCF21D812C6A /* ChannelsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelsView.swift; sourceTree = "<group>"; };
 		1FC6DCC40C2494785495C0BD /* AppStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStore.swift; sourceTree = "<group>"; };
 		21D8DACCF1CA2CB0EA9A6C9B /* MediaSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaSource.swift; sourceTree = "<group>"; };
 		22059F8015D99ECD0285091B /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		2A44AD95AA4EF14716DDA799 /* ColorHex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorHex.swift; sourceTree = "<group>"; };
-		2CE6E8D6BB9C1A51762B4F56 /* KidsTV.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KidsTV.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2CE6E8D6BB9C1A51762B4F56 /* KidsTV.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = KidsTV.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3A4C42E7FE3AEA7CBA828E6C /* HTTPClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPClient.swift; sourceTree = "<group>"; };
 		3AB64AAB0DB6FC84C2C2F51B /* AdminRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminRootView.swift; sourceTree = "<group>"; };
+		3DC19CB2BEAAF0EE1F14A026 /* SourceScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceScanner.swift; sourceTree = "<group>"; };
 		463BF61CFB40CC0BBE27823F /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		5150C872AED54742D89B120A /* SourcesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourcesView.swift; sourceTree = "<group>"; };
+		52F378F8B29F16DAE2ACBA8D /* EmbyScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmbyScanner.swift; sourceTree = "<group>"; };
 		5A260052D357C9FF5D1C41A6 /* PINEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PINEntryView.swift; sourceTree = "<group>"; };
 		63DC45EF849028E142590100 /* AddSourceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddSourceView.swift; sourceTree = "<group>"; };
+		66B021F9CA36D6E2D62E30CE /* SMBScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SMBScanner.swift; sourceTree = "<group>"; };
+		7BF24BF6F782346776953978 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		8B4228CC9DD16ECD6EB11F60 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		9120315D4472BB86D09C90D1 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		972942F9591126AFF2AC4028 /* VideoListPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoListPanel.swift; sourceTree = "<group>"; };
 		AB2D060891B6C8B732A4CD86 /* PlaybackState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackState.swift; sourceTree = "<group>"; };
 		AE413789928BB4D8A1061EC3 /* KidsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KidsView.swift; sourceTree = "<group>"; };
+		B6DED6638857FDEB168EF4B4 /* JellyfinScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JellyfinScanner.swift; sourceTree = "<group>"; };
 		B9A750624BE64EE94DA88C0C /* ChannelHUDView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelHUDView.swift; sourceTree = "<group>"; };
 		BF80F4BD8E7C3FBED69418BD /* KidsTVApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KidsTVApp.swift; sourceTree = "<group>"; };
 		C66279D007D56778117ACD2A /* Video.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Video.swift; sourceTree = "<group>"; };
+		C7479FAC694E425E77283626 /* BaiduPanScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaiduPanScanner.swift; sourceTree = "<group>"; };
 		CF119A354598057AD869D1A5 /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
+		DAEE4337D857CFE00131ED5F /* AliyunDriveScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AliyunDriveScanner.swift; sourceTree = "<group>"; };
 		DBE08F57FFF5E11F21186B86 /* WatchTimeRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchTimeRecord.swift; sourceTree = "<group>"; };
+		E9C770B9232537802A59D91A /* OAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthManager.swift; sourceTree = "<group>"; };
 		ED891EE5329FDF53BD0408FB /* AppStore+Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppStore+Persistence.swift"; sourceTree = "<group>"; };
 		F1FB5BCDB2CA8AB0514F0BD5 /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
+		F57C9BF470503ABE9BD67785 /* Pan115Scanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pan115Scanner.swift; sourceTree = "<group>"; };
 		FCDCB14FF749846971E69FD1 /* LockScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockScreenView.swift; sourceTree = "<group>"; };
 		FD4E134B15DADC36142B245C /* Channel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Channel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
+		05FDE558A9A79141FF455AFB /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				7BF24BF6F782346776953978 /* KeychainHelper.swift */,
+				E9C770B9232537802A59D91A /* OAuthManager.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
 		09D993B68F4213DE9B3CBC7D /* Admin */ = {
 			isa = PBXGroup;
 			children = (
@@ -80,6 +115,20 @@
 			path = Admin;
 			sourceTree = "<group>";
 		};
+		0AED9655ED518684CCE5489C /* Scanners */ = {
+			isa = PBXGroup;
+			children = (
+				DAEE4337D857CFE00131ED5F /* AliyunDriveScanner.swift */,
+				C7479FAC694E425E77283626 /* BaiduPanScanner.swift */,
+				52F378F8B29F16DAE2ACBA8D /* EmbyScanner.swift */,
+				B6DED6638857FDEB168EF4B4 /* JellyfinScanner.swift */,
+				F57C9BF470503ABE9BD67785 /* Pan115Scanner.swift */,
+				66B021F9CA36D6E2D62E30CE /* SMBScanner.swift */,
+				069B1DEB2C910AB7A425B502 /* WebDAVScanner.swift */,
+			);
+			path = Scanners;
+			sourceTree = "<group>";
+		};
 		14DE61A6FEE3DAE0A6A26FAC /* KidsTV */ = {
 			isa = PBXGroup;
 			children = (
@@ -87,6 +136,7 @@
 				8A3B9C888F875F20E613E79C /* App */,
 				2B09AFF9B0B270BCCF90D507 /* Components */,
 				B770DA0F974DEC1DECDED76A /* Models */,
+				E6A9B0CD0140C01E1359C05D /* Networking */,
 				8EF74B9A1675F0DFC050206B /* Persistence */,
 				9254E66A3A410F652630095B /* Resources */,
 				AC2200410411E0BF83943E84 /* Store */,
@@ -221,6 +271,19 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
+		E6A9B0CD0140C01E1359C05D /* Networking */ = {
+			isa = PBXGroup;
+			children = (
+				3A4C42E7FE3AEA7CBA828E6C /* HTTPClient.swift */,
+				12187516256C4E17A7491BA4 /* ScannerError.swift */,
+				02561301B311778CA7D9BFF8 /* ScannerRegistry.swift */,
+				3DC19CB2BEAAF0EE1F14A026 /* SourceScanner.swift */,
+				05FDE558A9A79141FF455AFB /* Auth */,
+				0AED9655ED518684CCE5489C /* Scanners */,
+			);
+			path = Networking;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -249,7 +312,9 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1620;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+				};
 			};
 			buildConfigurationList = 83B0D3E89858E069D1C45673 /* Build configuration list for PBXProject "KidsTV" */;
 			developmentRegion = en;
@@ -289,29 +354,42 @@
 			files = (
 				75967F09DD518D66701CAA3A /* AddSourceView.swift in Sources */,
 				7E1F1BA69E0D8F95EB7AF687 /* AdminRootView.swift in Sources */,
+				58B0D35A8779ADDD6A6FDF1A /* AliyunDriveScanner.swift in Sources */,
 				DCEA76943DA694372BC779B2 /* AppSettings.swift in Sources */,
 				DB4E14E9511B2AFC8F140EFB /* AppStore+Persistence.swift in Sources */,
 				D10E14A205A9FEE009D53EA4 /* AppStore.swift in Sources */,
+				7C96E43178F02A1A917C9612 /* BaiduPanScanner.swift in Sources */,
 				81CBAD75841D7B48071A7BBD /* Channel.swift in Sources */,
 				180B75B8BD0EEBFCFA438B36 /* ChannelEditorView.swift in Sources */,
 				B3E475CE5BACFBC6C0BE7638 /* ChannelHUDView.swift in Sources */,
 				71DB3B8EFC1434113E38244E /* ChannelsView.swift in Sources */,
 				4C156BCF0FA4B731CFE3F0E0 /* ColorHex.swift in Sources */,
+				F06EE9B081E9D2E6BEDEADC7 /* EmbyScanner.swift in Sources */,
+				47508EF9A767E2FDADA99812 /* HTTPClient.swift in Sources */,
+				037D4BC219EEF3987F784EA9 /* JellyfinScanner.swift in Sources */,
+				7889379F02756410CBAECCD4 /* KeychainHelper.swift in Sources */,
 				DA5B0F2D6DC7A995D3EC0777 /* KidsTVApp.swift in Sources */,
 				634ED785B3E82D28F6D0DDC8 /* KidsView.swift in Sources */,
 				98CDEB19B7EAA88FE328F4D0 /* LibraryView.swift in Sources */,
 				C926C2E19861977E7C0072F1 /* LockScreenView.swift in Sources */,
 				0CFE4CE41BFE9866EDD1AB1F /* MediaSource.swift in Sources */,
 				8A58FB8573519C3DEB82AA90 /* NumpadView.swift in Sources */,
+				7A9F5D16116752BFE958C881 /* OAuthManager.swift in Sources */,
 				E7907B787FD923CFD6F8BFFF /* PINEntryView.swift in Sources */,
+				75F95CDBC26C8A58BEC9B404 /* Pan115Scanner.swift in Sources */,
 				1B493DFD5FEF613D309517FF /* PlaybackState.swift in Sources */,
+				4B9F41870B91F9E926AB73AB /* SMBScanner.swift in Sources */,
+				ECCC000AD28C21A512CF448B /* ScannerError.swift in Sources */,
+				75CE5EBD16A0E829ACEA9F13 /* ScannerRegistry.swift in Sources */,
 				2D51C2EDA0C664B4C26DF186 /* SettingsView.swift in Sources */,
 				91685FEECD47011AC62F9152 /* SourceDetailView.swift in Sources */,
+				7CFF14431556D68B12814243 /* SourceScanner.swift in Sources */,
 				A7D9788C054BB74ADB2D1651 /* SourcesView.swift in Sources */,
 				4B377BE9BD8CC74F22992F91 /* Video.swift in Sources */,
 				5693381DA1546815F9E46E57 /* VideoListPanel.swift in Sources */,
 				067133F6903E5DF91213B1FD /* VideoPlayerView.swift in Sources */,
 				04ED499CC4ACEE20B152BF0D /* WatchTimeRecord.swift in Sources */,
+				05221FE5DB9576FBFB376F40 /* WebDAVScanner.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -354,7 +432,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -388,7 +465,6 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -421,7 +497,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -455,7 +530,6 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;

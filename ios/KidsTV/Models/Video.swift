@@ -10,6 +10,7 @@ struct Video: Identifiable, Codable {
     var resolution: String?     // e.g. "1920x1080"
     var fileSize: Int64?        // bytes
     var thumbnailColor: String  // hex color for placeholder
+    var remoteItemId: String?   // server-side ID (Emby item ID, cloud drive file ID)
     var addedAt: Date
 
     init(
@@ -21,6 +22,7 @@ struct Video: Identifiable, Codable {
         resolution: String? = nil,
         fileSize: Int64? = nil,
         thumbnailColor: String = "#4A90D9",
+        remoteItemId: String? = nil,
         addedAt: Date = .now
     ) {
         self.id = id
@@ -31,6 +33,7 @@ struct Video: Identifiable, Codable {
         self.resolution = resolution
         self.fileSize = fileSize
         self.thumbnailColor = thumbnailColor
+        self.remoteItemId = remoteItemId
         self.addedAt = addedAt
     }
 

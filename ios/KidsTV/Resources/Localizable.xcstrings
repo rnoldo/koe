@@ -40,6 +40,16 @@
         }
       }
     },
+    "Channel: %@ (%@ refs, 0 found)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Channel: %1$@ (%2$@ refs, 0 found)"
+          }
+        }
+      }
+    },
     "Channels" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -119,6 +129,9 @@
         }
       }
     },
+    "No videos in this channel" : {
+
+    },
     "No videos selected" : {
 
     },
@@ -142,6 +155,9 @@
           }
         }
       }
+    },
+    "Paste cookies from a logged-in 115.com browser session" : {
+
     },
     "Playlist" : {
       "localizations" : {
@@ -186,6 +202,9 @@
       }
     },
     "Start" : {
+
+    },
+    "Swipe left/right to try another channel" : {
 
     },
     "This will also remove all %@ videos from this source." : {
