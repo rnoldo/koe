@@ -166,6 +166,11 @@ const en = {
   'settings.timeHint': 'Leave blank for no time restriction. Kids mode will auto-lock after timeout.',
   'settings.globalVolume': 'Global Volume Limit',
   'settings.maxVolume': 'Max Volume',
+
+  // Confirm dialogs
+  'confirm.deleteSource': 'Delete this source? This cannot be undone.',
+  'confirm.deleteChannel': 'Delete this channel? This cannot be undone.',
+  'confirm.confirm': 'Delete',
 } as const
 
 export default en

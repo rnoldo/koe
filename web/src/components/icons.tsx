@@ -7,6 +7,7 @@ import {
   GripVertical, Search, Play, Pause, X, Lock, Eye, EyeOff,
   RefreshCw, FolderOpen, HardDrive, Check, ArrowLeft, LayoutGrid,
   List, Volume2, Clock, Shield, LogOut, Edit,
+  MonitorSmartphone, Server, Network, CloudCog, Database, Package, Clapperboard,
 } from 'lucide-react'
 import { LucideProps } from 'lucide-react'
 
@@ -22,9 +23,28 @@ export function ChannelIcon({ name, color, size = 32 }: { name: string; color: s
   return <Icon size={size} color={color} />
 }
 
+// Source type icon map
+import type { SourceType } from '@/types'
+
+const sourceIconMap: Record<SourceType, React.FC<LucideProps>> = {
+  local: FolderOpen,
+  webdav: Globe,
+  smb: MonitorSmartphone,
+  aliyunDrive: CloudCog,
+  baiduPan: Database,
+  pan115: Package,
+  emby: Clapperboard,
+  jellyfin: Server,
+}
+
+export function SourceTypeIcon({ type, size = 18, className }: { type: SourceType; size?: number; className?: string }) {
+  const Icon = sourceIconMap[type] || HardDrive
+  return <Icon size={size} className={className} />
+}
+
 export {
   Settings, ChevronLeft, ChevronRight, ChevronUp, Plus, Trash2,
   GripVertical, Search, Play, Pause, X, Lock, Eye, EyeOff,
   RefreshCw, FolderOpen, HardDrive, Check, ArrowLeft, LayoutGrid,
-  List, Volume2, Clock, Shield, LogOut, Edit, Tv,
+  List, Volume2, Clock, Shield, LogOut, Edit, Tv, Network,
 }

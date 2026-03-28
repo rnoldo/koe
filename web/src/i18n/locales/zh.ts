@@ -166,6 +166,11 @@ const zh = {
   'settings.timeHint': '留空表示不限制时间段。超时后儿童端将自动锁定。',
   'settings.globalVolume': '全局音量限制',
   'settings.maxVolume': '最大音量',
+
+  // Confirm dialogs
+  'confirm.deleteSource': '确定删除此媒体源？此操作无法撤销。',
+  'confirm.deleteChannel': '确定删除此频道？此操作无法撤销。',
+  'confirm.confirm': '删除',
 } as const
 
 export default zh

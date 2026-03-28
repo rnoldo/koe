@@ -1,13 +1,13 @@
 'use client'
 
-import { use } from 'react'
+import { use, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useStore } from '@/store'
 import { useT } from '@/i18n'
 import type { TranslationKey } from '@/i18n'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, RefreshCw, Trash2 } from '@/components/icons'
-import { SOURCE_CONFIG_FIELDS, SourceType } from '@/types'
+import { ArrowLeft, RefreshCw, Trash2, SourceTypeIcon } from '@/components/icons'
+import { SOURCE_CONFIG_FIELDS } from '@/types'
 
 function formatDuration(s: number) {
   const m = Math.floor(s / 60)
@@ -20,11 +20,6 @@ function formatSize(bytes: number) {
   return `${(bytes / 1_000_000).toFixed(0)} MB`
 }
 
-const SOURCE_TYPE_ICONS: Record<SourceType, string> = {
-  local: '📁', webdav: '🌐', smb: '🖥️', aliyunDrive: '☁️',
-  baiduPan: '💾', pan115: '📦', emby: '🎬', jellyfin: '🪼',
-}
-
 export default function SourceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
@@ -34,6 +29,7 @@ export default function SourceDetailPage({ params }: { params: Promise<{ id: str
   const scanSource = useStore((s) => s.scanSource)
   const deleteSource = useStore((s) => s.deleteSource)
   const locale = useStore((s) => s.locale)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const t = useT()
 
   const source = sources.find((s) => s.id === id)
@@ -80,7 +76,9 @@ export default function SourceDetailPage({ params }: { params: Promise<{ id: str
           <ArrowLeft size={18} />
         </button>
         <div className="flex items-center gap-2.5">
-          <span className="text-2xl">{SOURCE_TYPE_ICONS[source.type]}</span>
+          <div className="w-9 h-9 rounded-lg bg-bg-secondary flex items-center justify-center">
+            <SourceTypeIcon type={source.type} size={18} className="text-foreground-secondary" />
+          </div>
           <div>
             <h2 className="text-lg font-medium tracking-tight">{source.name}</h2>
             <span className="text-[11px] text-foreground-secondary">
@@ -97,9 +95,21 @@ export default function SourceDetailPage({ params }: { params: Promise<{ id: str
           <RefreshCw size={14} className={source.scanStatus === 'scanning' ? 'animate-spin' : ''} />
           {source.scanStatus === 'scanning' ? t('sources.scanning') : t('sources.rescan')}
         </Button>
-        <Button variant="ghost" onClick={handleDelete}>
-          <Trash2 size={14} className="text-red-400" />
-        </Button>
+        {confirmDelete ? (
+          <>
+            <span className="text-xs text-red-500">{t('confirm.deleteSource')}</span>
+            <Button variant="danger" size="sm" onClick={handleDelete}>
+              {t('confirm.confirm')}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>
+              {t('common.cancel')}
+            </Button>
+          </>
+        ) : (
+          <Button variant="ghost" onClick={() => setConfirmDelete(true)}>
+            <Trash2 size={14} className="text-red-400" />
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">

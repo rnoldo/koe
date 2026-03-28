@@ -466,7 +466,7 @@ export default function KidsPage() {
           {/* Panel */}
           <div
             ref={videoListRef}
-            className={`absolute right-0 top-0 bottom-0 w-[35%] min-w-[280px] max-w-[400px] z-40 bg-black/90 backdrop-blur-md flex flex-col ${
+            className={`absolute right-0 top-0 bottom-0 w-[70%] sm:w-[45%] md:w-[35%] min-w-0 max-w-[400px] z-40 bg-black/90 backdrop-blur-md flex flex-col ${
               closingVideoList ? 'animate-panel-out' : 'animate-panel-in'
             }`}
             onClick={(e) => e.stopPropagation()}

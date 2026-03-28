@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { useStore } from '@/store'
+import { useStore, useHydrated } from '@/store'
 import { useT } from '@/i18n'
 import { Search, LayoutGrid, List, FolderOpen } from '@/components/icons'
 import { Input } from '@/components/ui/input'
@@ -24,6 +24,7 @@ export default function LibraryPage() {
   const [search, setSearch] = useState('')
   const [sourceFilter, setSourceFilter] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const hydrated = useHydrated()
   const t = useT()
 
   const filtered = useMemo(() => {
@@ -39,6 +40,28 @@ export default function LibraryPage() {
   const getSourceName = (id: string) => sources.find((s) => s.id === id)?.name || t('library.unknownSource')
   const getChannelNames = (videoId: string) =>
     channels.filter((c) => c.videoIds.includes(videoId)).map((c) => c.name)
+
+  if (!hydrated) {
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <div className="h-5 w-24 bg-bg-secondary rounded animate-pulse" />
+            <div className="h-4 w-32 bg-bg-secondary rounded animate-pulse mt-2" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {Array.from({ length: 10 }, (_, i) => (
+            <div key={i}>
+              <div className="aspect-video rounded-lg bg-bg-secondary animate-pulse mb-2" />
+              <div className="h-4 w-3/4 bg-bg-secondary rounded animate-pulse" />
+              <div className="h-3 w-1/2 bg-bg-secondary rounded animate-pulse mt-1" />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div>

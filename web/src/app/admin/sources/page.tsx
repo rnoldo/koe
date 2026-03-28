@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useStore } from '@/store'
+import { useStore, useHydrated } from '@/store'
 import { useT } from '@/i18n'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Plus, Trash2, RefreshCw, HardDrive, X, Check, Eye, EyeOff } from '@/components/icons'
+import { Plus, Trash2, RefreshCw, HardDrive, X, Check, Eye, EyeOff, SourceTypeIcon } from '@/components/icons'
 import { SOURCE_CONFIG_FIELDS, OAUTH_SOURCE_TYPES, SOURCE_TYPES, SourceType } from '@/types'
 import type { TranslationKey } from '@/i18n'
 
@@ -124,11 +124,6 @@ function ConfigForm({
   )
 }
 
-const SOURCE_TYPE_ICONS: Record<SourceType, string> = {
-  local: '📁', webdav: '🌐', smb: '🖥️', aliyunDrive: '☁️',
-  baiduPan: '💾', pan115: '📦', emby: '🎬', jellyfin: '🪼',
-}
-
 export default function SourcesPage() {
   const router = useRouter()
   const sources = useStore((s) => s.sources)
@@ -141,7 +136,34 @@ export default function SourcesPage() {
   const [newName, setNewName] = useState('')
   const [newType, setNewType] = useState<SourceType>('local')
   const [newConfig, setNewConfig] = useState<Record<string, string>>({})
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const hydrated = useHydrated()
   const t = useT()
+
+  if (!hydrated) {
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <div className="h-5 w-32 bg-bg-secondary rounded animate-pulse" />
+            <div className="h-4 w-56 bg-bg-secondary rounded animate-pulse mt-2" />
+          </div>
+          <div className="h-9 w-28 bg-bg-secondary rounded-lg animate-pulse" />
+        </div>
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-surface rounded-xl border border-border p-4 flex items-center gap-3.5">
+              <div className="w-8 h-8 rounded-lg bg-bg-secondary animate-pulse" />
+              <div className="flex-1">
+                <div className="h-4 w-40 bg-bg-secondary rounded animate-pulse" />
+                <div className="h-3 w-24 bg-bg-secondary rounded animate-pulse mt-1.5" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   const handleAdd = () => {
     if (!newName.trim()) return
@@ -209,7 +231,7 @@ export default function SourcesPage() {
                         : 'border-border hover:border-gray-light bg-surface'
                     }`}
                   >
-                    <span className="text-base">{SOURCE_TYPE_ICONS[type]}</span>
+                    <SourceTypeIcon type={type} size={16} />
                     <span>{sourceTypeLabel(type)}</span>
                   </button>
                 ))}
@@ -248,7 +270,9 @@ export default function SourcesPage() {
                 onClick={() => router.push(`/admin/sources/${src.id}`)}
               >
                 <div className="relative">
-                  <span className="text-xl">{SOURCE_TYPE_ICONS[src.type]}</span>
+                  <div className="w-8 h-8 rounded-lg bg-bg-secondary flex items-center justify-center">
+                    <SourceTypeIcon type={src.type} size={16} className="text-foreground-secondary" />
+                  </div>
                   <div className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full ring-2 ring-surface ${statusIndicator(src.scanStatus)}`} />
                 </div>
                 <div>
@@ -288,9 +312,20 @@ export default function SourcesPage() {
                 >
                   <RefreshCw size={13} className={src.scanStatus === 'scanning' ? 'animate-spin' : ''} />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => deleteSource(src.id)}>
-                  <Trash2 size={13} className="text-red-400" />
-                </Button>
+                {confirmDeleteId === src.id ? (
+                  <>
+                    <Button variant="danger" size="sm" onClick={() => { deleteSource(src.id); setConfirmDeleteId(null) }}>
+                      {t('confirm.confirm')}
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setConfirmDeleteId(null)}>
+                      {t('common.cancel')}
+                    </Button>
+                  </>
+                ) : (
+                  <Button variant="ghost" size="sm" onClick={() => setConfirmDeleteId(src.id)}>
+                    <Trash2 size={13} className="text-red-400" />
+                  </Button>
+                )}
               </div>
             </div>
           ))}

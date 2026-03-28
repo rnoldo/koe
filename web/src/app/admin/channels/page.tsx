@@ -1,10 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useStore } from '@/store'
+import { useStore, useHydrated } from '@/store'
 import { useT } from '@/i18n'
 import { Button } from '@/components/ui/button'
-import { ChannelIcon, Plus, Trash2, GripVertical, Edit, Tv } from '@/components/icons'
+import { ChannelIcon, Plus, Trash2, GripVertical, Edit, Tv, X } from '@/components/icons'
 import {
   DndContext,
   closestCenter,
@@ -25,11 +26,15 @@ function SortableChannel({
   videoCountLabel,
   onEdit,
   onDelete,
+  confirmingDelete,
+  onCancelDelete,
 }: {
   channel: { id: string; name: string; iconName: string; iconColor: string; videoIds: string[] }
   videoCountLabel: string
   onEdit: () => void
   onDelete: () => void
+  confirmingDelete?: boolean
+  onCancelDelete?: () => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: channel.id,
@@ -61,12 +66,25 @@ function SortableChannel({
         <p className="text-[11px] text-gray">{videoCountLabel}</p>
       </div>
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Button variant="ghost" size="sm" onClick={onEdit}>
-          <Edit size={13} />
-        </Button>
-        <Button variant="ghost" size="sm" onClick={onDelete}>
-          <Trash2 size={13} className="text-red-400" />
-        </Button>
+        {confirmingDelete ? (
+          <>
+            <Button variant="danger" size="sm" onClick={onDelete}>
+              <Trash2 size={13} />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={onCancelDelete}>
+              <X size={13} />
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button variant="ghost" size="sm" onClick={onEdit}>
+              <Edit size={13} />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={onDelete}>
+              <Trash2 size={13} className="text-red-400" />
+            </Button>
+          </>
+        )}
       </div>
     </div>
   )
@@ -77,10 +95,12 @@ export default function ChannelsPage() {
   const channels = useStore((s) => s.channels)
   const deleteChannel = useStore((s) => s.deleteChannel)
   const reorderChannels = useStore((s) => s.reorderChannels)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const hydrated = useHydrated()
   const t = useT()
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   const sorted = [...channels].sort((a, b) => a.sortOrder - b.sortOrder)
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
@@ -91,6 +111,32 @@ export default function ChannelsPage() {
     const [moved] = newOrder.splice(oldIndex, 1)
     newOrder.splice(newIndex, 0, moved)
     reorderChannels(newOrder.map((c) => c.id))
+  }
+
+  if (!hydrated) {
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <div className="h-5 w-32 bg-bg-secondary rounded animate-pulse" />
+            <div className="h-4 w-48 bg-bg-secondary rounded animate-pulse mt-2" />
+          </div>
+          <div className="h-9 w-28 bg-bg-secondary rounded-lg animate-pulse" />
+        </div>
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-surface rounded-xl border border-border p-3.5 flex items-center gap-3.5">
+              <div className="w-4 h-4 bg-bg-secondary rounded animate-pulse" />
+              <div className="w-9 h-9 rounded-xl bg-bg-secondary animate-pulse" />
+              <div className="flex-1">
+                <div className="h-4 w-32 bg-bg-secondary rounded animate-pulse" />
+                <div className="h-3 w-20 bg-bg-secondary rounded animate-pulse mt-1.5" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -121,7 +167,16 @@ export default function ChannelsPage() {
                   channel={ch}
                   videoCountLabel={t('common.videos', { count: ch.videoIds.length })}
                   onEdit={() => router.push(`/admin/channels/${ch.id}`)}
-                  onDelete={() => deleteChannel(ch.id)}
+                  onDelete={() => {
+                    if (confirmDeleteId === ch.id) {
+                      deleteChannel(ch.id)
+                      setConfirmDeleteId(null)
+                    } else {
+                      setConfirmDeleteId(ch.id)
+                    }
+                  }}
+                  confirmingDelete={confirmDeleteId === ch.id}
+                  onCancelDelete={() => setConfirmDeleteId(null)}
                 />
               ))}
             </div>

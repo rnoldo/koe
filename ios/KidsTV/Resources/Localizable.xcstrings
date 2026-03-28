@@ -1,0 +1,220 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "·" : {
+
+    },
+    "%@" : {
+
+    },
+    "%@ videos" : {
+
+    },
+    "%@%%" : {
+
+    },
+    "🌙" : {
+
+    },
+    "Add Videos" : {
+
+    },
+    "Allowed Hours" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许观看时段"
+          }
+        }
+      }
+    },
+    "CH %@ / %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "CH %1$@ / %2$@"
+          }
+        }
+      }
+    },
+    "Channels" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "频道"
+          }
+        }
+      }
+    },
+    "Choose Folder…" : {
+
+    },
+    "Daily Watch Limit" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每日观看限制"
+          }
+        }
+      }
+    },
+    "Default Volume" : {
+
+    },
+    "End" : {
+
+    },
+    "Enter your PIN to continue" : {
+      "localizations" : {
+        "zh" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请输入PIN码继续"
+          }
+        }
+      }
+    },
+    "Leave blank for no restriction" : {
+
+    },
+    "Library" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "媒体库"
+          }
+        }
+      }
+    },
+    "Max Volume" : {
+
+    },
+    "No channels yet" : {
+      "localizations" : {
+        "zh" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂无频道"
+          }
+        }
+      }
+    },
+    "No Limit" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不限制"
+          }
+        }
+      }
+    },
+    "No videos selected" : {
+
+    },
+    "Parent Access" : {
+      "localizations" : {
+        "zh" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "家长访问"
+          }
+        }
+      }
+    },
+    "Parental PIN" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "家长密码"
+          }
+        }
+      }
+    },
+    "Playlist" : {
+      "localizations" : {
+        "zh" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "播放列表"
+          }
+        }
+      }
+    },
+    "Save Settings" : {
+      "localizations" : {
+        "zh" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存设置"
+          }
+        }
+      }
+    },
+    "Settings" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置"
+          }
+        }
+      }
+    },
+    "Sources" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "来源"
+          }
+        }
+      }
+    },
+    "Start" : {
+
+    },
+    "This will also remove all %@ videos from this source." : {
+
+    },
+    "This will remove the channel and its %@ video references." : {
+
+    },
+    "Today's watch time is over" : {
+      "localizations" : {
+        "zh" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天的观看时间已用完"
+          }
+        }
+      }
+    },
+    "Volume Limiter" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音量限制"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

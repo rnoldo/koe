@@ -1,0 +1,39 @@
+name: KidsTV
+options:
+  bundleIdPrefix: com.koetv
+  deploymentTarget:
+    iOS: "17.0"
+  developmentLanguage: en
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.10"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    TARGETED_DEVICE_FAMILY: "1,2"  # iPhone + iPad
+    SUPPORTS_MACCATALYST: "NO"
+
+targets:
+  KidsTV:
+    type: application
+    platform: iOS
+    sources:
+      - path: KidsTV
+        excludes:
+          - "**/*.md"
+    resources:
+      - path: KidsTV/Resources
+    info:
+      path: KidsTV/Info.plist
+      properties:
+        CFBundleDisplayName: KidsTV
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UIRequiresFullScreen: true
+        NSLocalNetworkUsageDescription: "Used to connect to local media servers (SMB, WebDAV, Emby)"
+        UIBackgroundModes:
+          - audio

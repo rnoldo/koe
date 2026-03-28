@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { useState, useEffect } from 'react'
 import { MediaSource, Video, Channel, PlaybackState, WatchTimeRecord, AppSettings } from '@/types'
 import { MOCK_SOURCES, MOCK_VIDEOS, MOCK_CHANNELS, DEFAULT_SETTINGS } from '@/data/mock'
 type Locale = 'en' | 'zh'
@@ -212,3 +213,9 @@ export const useStore = create<AppStore>()(
     }
   )
 )
+
+export function useHydrated() {
+  const [hydrated, setHydrated] = useState(false)
+  useEffect(() => setHydrated(true), [])
+  return hydrated
+}

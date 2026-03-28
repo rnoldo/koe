@@ -28,10 +28,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   if (!isAdminAuthenticated) {
-    if (typeof window !== 'undefined') {
-      router.replace('/admin')
-    }
-    return null
+    router.replace('/admin')
+    return (
+      <div className="h-full flex items-center justify-center bg-bg">
+        <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
   }
 
   const todayMinutes = Math.floor(getTodayWatchTime() / 60)
