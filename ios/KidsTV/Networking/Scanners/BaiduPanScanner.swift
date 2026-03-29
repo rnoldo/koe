@@ -5,8 +5,8 @@ struct BaiduPanScanner: SourceScanner {
     private let http = HTTPClient.shared
 
     // Register your app at https://pan.baidu.com/union/doc/
-    static let clientId = "YOUR_BAIDU_CLIENT_ID"
-    static let clientSecret = "YOUR_BAIDU_CLIENT_SECRET"
+    static let clientId = Secrets.Baidu.clientId
+    static let clientSecret = Secrets.Baidu.clientSecret
     static let callbackScheme = "kidstv"
     static let redirectURI = "kidstv://oauth/baidu"
 

@@ -6,7 +6,7 @@ struct AliyunDriveScanner: SourceScanner {
     private let baseAPI = "https://open.alipan.com"
 
     // Register your app at https://open.alipan.com/ to get these
-    static let clientId = "YOUR_ALIYUN_CLIENT_ID"
+    static let clientId = Secrets.Aliyun.clientId
     static let callbackScheme = "kidstv"
     static let redirectURI = "kidstv://oauth/aliyun"
 

@@ -12,6 +12,9 @@ Pods/
 .build/
 *.resolved
 
+# Secrets
+KidsTV/Secrets.swift
+
 # macOS
 .DS_Store
 
