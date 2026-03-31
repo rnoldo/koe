@@ -245,6 +245,17 @@ final class AppStore {
         return try await scanner.streamingURL(for: video, source: source)
     }
 
+    func prefetchPlayback(for video: Video) {
+        Task(priority: .background) {
+            do {
+                _ = try await resolvePlaybackURL(for: video)
+                print("[KidsTV] Prefetched playback for \(video.title)")
+            } catch {
+                print("[KidsTV] Prefetch failed for \(video.title): \(error)")
+            }
+        }
+    }
+
     // MARK: - Watch Time
 
     func addWatchTime(seconds: Int) {

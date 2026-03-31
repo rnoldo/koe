@@ -169,6 +169,9 @@
         }
       }
     },
+    "Resolving..." : {
+
+    },
     "Save Settings" : {
       "localizations" : {
         "zh" : {
@@ -189,6 +192,9 @@
           }
         }
       }
+    },
+    "Signing in…" : {
+
     },
     "Sources" : {
       "extractionState" : "stale",
@@ -233,6 +239,12 @@
           }
         }
       }
+    },
+    "没有子文件夹" : {
+
+    },
+    "返回" : {
+
     }
   },
   "version" : "1.0"

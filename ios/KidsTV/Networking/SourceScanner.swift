@@ -1,9 +1,21 @@
 import Foundation
 
 /// Represents a playable media item with optional auth headers
+struct StreamSegment {
+    let url: URL
+    let duration: Double
+}
+
 struct StreamableMedia {
     let url: URL
     let httpHeaders: [String: String]
+    let segments: [StreamSegment]?
+
+    init(url: URL, httpHeaders: [String: String], segments: [StreamSegment]? = nil) {
+        self.url = url
+        self.httpHeaders = httpHeaders
+        self.segments = segments
+    }
 }
 
 /// Protocol for scanning remote media sources and resolving streaming URLs

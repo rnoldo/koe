@@ -15,6 +15,11 @@ struct KidsView: View {
     // Streaming resolution
     @State private var resolvedStreamURL: URL?
     @State private var resolvedStreamHeaders: [String: String]?
+    @State private var resolvedStreamSegments: [StreamSegment]?
+    @State private var isResolvingStream = false
+    @State private var streamResolveError: String?
+    @State private var streamResolveGeneration = 0
+    @State private var prefetchedVideoId: String?
 
     // UI state
     @State private var showHUD = false
@@ -66,16 +71,35 @@ struct KidsView: View {
                 }
                 gestureOverlay
             } else if let video = currentVideo, let channel = currentChannel {
+                if isResolvingStream {
+                    // Wait for stream URL to resolve before rendering player
+                    ProgressView()
+                        .tint(.white)
+                        .scaleEffect(1.5)
+                } else if let error = streamResolveError {
+                    VStack(spacing: 12) {
+                        Image(systemName: "exclamationmark.triangle")
+                            .font(.system(size: 40))
+                            .foregroundStyle(.yellow)
+                        Text(error)
+                            .foregroundStyle(.white.opacity(0.8))
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(32)
+                } else {
                 // Video player layer
                 VideoPlayerView(
                     video: video,
                     volume: min(channel.defaultVolume, store.settings.maxVolume),
                     streamURL: resolvedStreamURL,
                     streamHeaders: resolvedStreamHeaders,
+                    streamSegments: resolvedStreamSegments,
+                    requiresResolvedStream: videoNeedsResolve(video),
                     currentTime: $currentTime,
                     isPlaying: $isPlaying
                 ) {
                     advanceVideo()
+                }
                 }
 
                 // Gesture capture layer
@@ -155,7 +179,11 @@ struct KidsView: View {
             isPlaying = true
             resolveStream()
         }
-        .onDisappear { saveState(); stopWatchTimer() }
+        .onDisappear {
+            streamResolveGeneration += 1
+            saveState()
+            stopWatchTimer()
+        }
         .onChange(of: videoIndex) { _, _ in resolveStream() }
         .onChange(of: channelIndex) { _, _ in resolveStream() }
         .animation(.easeInOut(duration: 0.2), value: showHUD)
@@ -239,22 +267,63 @@ struct KidsView: View {
     // MARK: - Stream Resolution
 
     private func resolveStream() {
+        streamResolveGeneration += 1
+        let generation = streamResolveGeneration
+
         guard let video = currentVideo else {
             resolvedStreamURL = nil
             resolvedStreamHeaders = nil
+            resolvedStreamSegments = nil
+            isResolvingStream = false
+            streamResolveError = nil
             return
         }
+
+        // Check if this video needs stream resolution (remote sources with non-URL paths)
+        let needsResolve = videoNeedsResolve(video)
+
+        if needsResolve {
+            isResolvingStream = true
+        }
+        streamResolveError = nil
+
         Task {
             do {
                 let media = try await store.resolvePlaybackURL(for: video)
-                resolvedStreamURL = media.url
-                resolvedStreamHeaders = media.httpHeaders.isEmpty ? nil : media.httpHeaders
+                await MainActor.run {
+                    guard generation == streamResolveGeneration else { return }
+                    resolvedStreamURL = media.url
+                    resolvedStreamHeaders = media.httpHeaders.isEmpty ? nil : media.httpHeaders
+                    resolvedStreamSegments = media.segments
+                    streamResolveError = nil
+                    isResolvingStream = false
+                    prefetchUpcomingVideo()
+                }
             } catch {
-                print("[KidsTV] Stream resolve failed: \(error)")
-                resolvedStreamURL = nil
-                resolvedStreamHeaders = nil
+                await MainActor.run {
+                    guard generation == streamResolveGeneration else { return }
+                    print("[KidsTV] Stream resolve failed: \(error)")
+                    resolvedStreamURL = nil
+                    resolvedStreamHeaders = nil
+                    resolvedStreamSegments = nil
+                    streamResolveError = error.localizedDescription
+                    isResolvingStream = false
+                }
             }
         }
+    }
+
+    private func videoNeedsResolve(_ video: Video) -> Bool {
+        !video.remotePath.hasPrefix("http://") && !video.remotePath.hasPrefix("https://")
+            && store.sources.first(where: { $0.id == video.sourceId })?.type != .local
+    }
+
+    private func prefetchUpcomingVideo() {
+        guard videoIndex < currentVideos.count - 1 else { return }
+        let nextVideo = currentVideos[videoIndex + 1]
+        guard prefetchedVideoId != nextVideo.id else { return }
+        prefetchedVideoId = nextVideo.id
+        store.prefetchPlayback(for: nextVideo)
     }
 
     // MARK: - Actions

@@ -23,6 +23,10 @@ targets:
           - "**/*.md"
     resources:
       - path: KidsTV/Resources
+    dependencies:
+      - framework: Frameworks/MobileVLCKit.xcframework
+        embed: true
+        codeSignOnCopy: true
     info:
       path: KidsTV/Info.plist
       properties:
@@ -37,3 +41,6 @@ targets:
         NSLocalNetworkUsageDescription: "Used to connect to local media servers (SMB, WebDAV, Emby)"
         UIBackgroundModes:
           - audio
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+          NSAllowsArbitraryLoadsForMedia: true

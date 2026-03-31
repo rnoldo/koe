@@ -6,6 +6,7 @@ enum ScannerError: LocalizedError {
     case authRequired
     case tokenExpired
     case notImplemented(String)
+    case serverError(String)
 
     var errorDescription: String? {
         switch self {
@@ -14,6 +15,7 @@ enum ScannerError: LocalizedError {
         case .authRequired: return "Authentication required — please sign in"
         case .tokenExpired: return "Token expired — please re-authenticate"
         case .notImplemented(let name): return "\(name) is not yet implemented"
+        case .serverError(let msg): return msg
         }
     }
 }

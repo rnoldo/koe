@@ -6,8 +6,10 @@ class OAuthManager: NSObject, ASWebAuthenticationPresentationContextProviding {
 
     static let shared = OAuthManager()
 
-    /// Launch OAuth2 flow and return the authorization code
-    func authenticate(authURL: URL, callbackScheme: String) async throws -> String {
+    /// Launch OAuth2 flow and return the authorization code.
+    /// Pass `ephemeral: true` when switching accounts to get a fresh login screen
+    /// without the existing browser session's cookies.
+    func authenticate(authURL: URL, callbackScheme: String, ephemeral: Bool = false) async throws -> String {
         try await withCheckedThrowingContinuation { continuation in
             let session = ASWebAuthenticationSession(
                 url: authURL,
@@ -26,7 +28,7 @@ class OAuthManager: NSObject, ASWebAuthenticationPresentationContextProviding {
                 continuation.resume(returning: code)
             }
             session.presentationContextProvider = self
-            session.prefersEphemeralWebBrowserSession = false
+            session.prefersEphemeralWebBrowserSession = ephemeral
             session.start()
         }
     }

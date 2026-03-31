@@ -7,8 +7,8 @@ struct BaiduPanScanner: SourceScanner {
     // Register your app at https://pan.baidu.com/union/doc/
     static let clientId = Secrets.Baidu.clientId
     static let clientSecret = Secrets.Baidu.clientSecret
-    static let callbackScheme = "kidstv"
-    static let redirectURI = "kidstv://oauth/baidu"
+    static let callbackScheme = "bdconnect"
+    static let redirectURI = "bdconnect://oauth"
 
     func scan(source: MediaSource) async throws -> [Video] {
         guard let token = source.config.accessToken, !token.isEmpty else {
@@ -19,25 +19,286 @@ struct BaiduPanScanner: SourceScanner {
     }
 
     func streamingURL(for video: Video, source: MediaSource) async throws -> StreamableMedia {
-        guard let token = source.config.accessToken,
-              let fsId = video.remoteItemId else {
+        guard let token = source.config.accessToken else {
             throw ScannerError.authRequired
         }
-        // Get download link via filemetas API
-        var c = URLComponents(string: "https://pan.baidu.com/rest/2.0/xpan/multimedia")!
-        c.queryItems = [
-            URLQueryItem(name: "method", value: "filemetas"),
-            URLQueryItem(name: "access_token", value: token),
-            URLQueryItem(name: "fsids", value: "[\(fsId)]"),
-            URLQueryItem(name: "dlink", value: "1"),
+        let path = video.remotePath
+        guard !path.isEmpty else { throw ScannerError.invalidURL }
+
+        // Baidu Pan streaming API (https://pan.baidu.com/union/doc/aksk0bacn)
+        // Two-step process: first get adToken, then fetch M3U8 with it.
+        // error_code 31341 means transcoding in progress — retry up to 3 times.
+        let baseURL = streamingRequestURL(token: token, path: path, type: "M3U8_AUTO_720")
+
+        // Step 1: Request with nom3u8=1 to get adToken and wait time
+        let step1 = try await fetchStreamingMeta(baseURL: baseURL)
+
+        NSLog("%@", "[KidsTV][Baidu] step1: errno=\(step1.errno as Any) error_code=\(step1.error_code as Any) adToken=\(step1.adToken?.prefix(20) as Any) ltime=\(step1.ltime as Any) adTime=\(step1.adTime as Any)")
+
+        // Step 2+: Fetch M3U8, retrying on errno:133 (Baidu ad-wait mechanism).
+        // Baidu requires waiting `adTime` seconds and re-requesting with a fresh adToken.
+        let waitTime = step1.ltime ?? 0
+        if waitTime > 0 {
+            try await Task.sleep(for: .seconds(waitTime))
+        }
+
+        let playlist = try await fetchM3U8(baseURL: baseURL, adToken: step1.adToken ?? "")
+        logOriginalPlaylistDiagnostics(playlist.content)
+
+        let requestHeaders = [
+            "User-Agent": "xpanvideo;KidsTV;1.0.0;iOS;1;ts",
+            "Referer": "https://pan.baidu.com/"
         ]
-        let (data, _) = try await http.get(c.url!, headers: [:])
-        let resp = try JSONDecoder().decode(BaiduFileMetaResponse.self, from: data)
-        guard let dlink = resp.list.first?.dlink else { throw ScannerError.invalidURL }
-        // Append access_token to dlink
-        let dlURL = URL(string: "\(dlink)&access_token=\(token)")!
-        // Baidu requires a User-Agent header for downloads
-        return StreamableMedia(url: dlURL, httpHeaders: ["User-Agent": "pan.baidu.com"])
+        let segments = resolvedSegments(from: playlist.content, baseURL: playlist.finalURL)
+        let totalDuration = segments.reduce(0) { $0 + $1.duration }
+        NSLog(
+            "%@",
+            "[KidsTV][Baidu] segment queue ready: count=\(segments.count) totalDuration=\(Int(totalDuration))s first=\(segments.first?.url.absoluteString ?? "nil")"
+        )
+
+        return try await BaiduPlaybackPipeline.shared.preparePlayableMedia(
+            video: video,
+            segments: segments,
+            headers: requestHeaders
+        )
+    }
+
+    private func logOriginalPlaylistDiagnostics(_ playlist: String) {
+        let lines = playlist.split(separator: "\n", omittingEmptySubsequences: true).map(String.init)
+        let interesting = lines.filter {
+            $0.hasPrefix("#EXT-X-VERSION") ||
+            $0.hasPrefix("#EXT-X-TARGETDURATION") ||
+            $0.hasPrefix("#EXT-X-MEDIA-SEQUENCE") ||
+            $0.hasPrefix("#EXT-X-MAP") ||
+            $0.hasPrefix("#EXT-X-KEY") ||
+            $0.hasPrefix("#EXT-X-INDEPENDENT-SEGMENTS") ||
+            $0.hasPrefix("#EXT-X-ENDLIST") ||
+            $0.hasPrefix("#EXTINF") ||
+            (!$0.hasPrefix("#") && !$0.isEmpty)
+        }
+        let preview = interesting.prefix(16).joined(separator: " | ")
+        NSLog("%@", "[KidsTV][Baidu] original M3U8 directives: \(preview.prefix(1200))")
+    }
+
+    private func logSegmentDiagnostics(for playlist: String) async throws {
+        let segmentURLs = playlist
+            .split(separator: "\n", omittingEmptySubsequences: true)
+            .map { String($0).trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty && !$0.hasPrefix("#") }
+            .compactMap(URL.init(string:))
+
+        for (index, segmentURL) in segmentURLs.prefix(3).enumerated() {
+            var request = URLRequest(url: segmentURL)
+            request.httpMethod = "GET"
+            request.setValue("pan.baidu.com", forHTTPHeaderField: "User-Agent")
+            request.setValue("bytes=0-4095", forHTTPHeaderField: "Range")
+
+            do {
+                let (data, response) = try await URLSession.shared.data(for: request)
+                guard let http = response as? HTTPURLResponse else {
+                    NSLog("%@", "[KidsTV][Baidu] segment[\(index)] probe invalid response")
+                    continue
+                }
+                let bytes = data.prefix(16).map { String(format: "%02X", $0) }.joined(separator: " ")
+                let components = URLComponents(url: segmentURL, resolvingAgainstBaseURL: false)
+                let range = components?.queryItems?.first(where: { $0.name == "range" })?.value ?? "nil"
+                let len = components?.queryItems?.first(where: { $0.name == "len" })?.value ?? "nil"
+                let boxes = topLevelMP4Boxes(in: data, limit: 8).joined(separator: " | ")
+                NSLog(
+                    "%@",
+                    "[KidsTV][Baidu] segment[\(index)] probe status=\(http.statusCode) payload=\(data.count) type=\(http.mimeType ?? "nil") range=\(range) len=\(len) bytes=\(bytes) boxes=\(boxes) url=\(segmentURL.absoluteString.prefix(220))"
+                )
+            } catch {
+                NSLog("%@", "[KidsTV][Baidu] segment[\(index)] probe error: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private func topLevelMP4Boxes(in data: Data, limit: Int) -> [String] {
+        var boxes: [String] = []
+        var offset = 0
+
+        while offset + 8 <= data.count && boxes.count < limit {
+            let size32 = readUInt32(in: data, at: offset)
+            let typeData = data.subdata(in: (offset + 4)..<(offset + 8))
+            let type = String(data: typeData, encoding: .ascii) ?? "????"
+
+            var headerSize = 8
+            var boxSize = Int(size32)
+
+            if size32 == 1 {
+                guard offset + 16 <= data.count else {
+                    boxes.append("\(type):extended-truncated")
+                    break
+                }
+                boxSize = Int(readUInt64(in: data, at: offset + 8))
+                headerSize = 16
+            } else if size32 == 0 {
+                boxSize = data.count - offset
+            }
+
+            guard boxSize >= headerSize, offset + boxSize <= data.count else {
+                boxes.append("\(type):invalid(\(boxSize))")
+                break
+            }
+
+            boxes.append("\(type):\(boxSize)")
+            offset += boxSize
+        }
+
+        return boxes
+    }
+
+    private func readUInt32(in data: Data, at offset: Int) -> UInt32 {
+        data[offset..<(offset + 4)].reduce(UInt32(0)) { ($0 << 8) | UInt32($1) }
+    }
+
+    private func readUInt64(in data: Data, at offset: Int) -> UInt64 {
+        data[offset..<(offset + 8)].reduce(UInt64(0)) { ($0 << 8) | UInt64($1) }
+    }
+
+    private func resolvedSegments(from playlist: String, baseURL: URL) -> [ResolvedBaiduSegment] {
+        var originalURLs: [URL] = []
+        var durations: [Double] = []
+        var pendingDuration: Double?
+
+        for rawLine in playlist.split(separator: "\n", omittingEmptySubsequences: false) {
+            let line = rawLine.trimmingCharacters(in: .whitespaces)
+            guard !line.isEmpty else { continue }
+
+            if line.hasPrefix("#EXTINF:") {
+                let value = line
+                    .dropFirst("#EXTINF:".count)
+                    .split(separator: ",", maxSplits: 1, omittingEmptySubsequences: false)
+                    .first
+                pendingDuration = value.flatMap { Double($0) }
+                continue
+            }
+
+            guard !line.hasPrefix("#") else { continue }
+
+            let absoluteURL: URL?
+            if line.hasPrefix("http://") || line.hasPrefix("https://") {
+                absoluteURL = URL(string: line)
+            } else {
+                absoluteURL = URL(string: line, relativeTo: baseURL)?.absoluteURL
+            }
+
+            guard let absoluteURL else { continue }
+            originalURLs.append(absoluteURL)
+            durations.append(pendingDuration ?? 0)
+            pendingDuration = nil
+        }
+
+        return zip(originalURLs, durations).map { url, duration in
+            ResolvedBaiduSegment(url: url, duration: duration)
+        }
+    }
+
+    /// Fetch M3U8 content, retrying on errno:133 (Baidu ad-wait mechanism).
+    private func fetchM3U8(baseURL: URL, adToken: String, maxRetries: Int = 12) async throws -> BaiduM3U8Playlist {
+        var currentAdToken = adToken
+        for attempt in 1...maxRetries {
+            var c = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)!
+            if !currentAdToken.isEmpty {
+                c.queryItems?.append(URLQueryItem(name: "adToken", value: currentAdToken))
+            }
+            let url = c.url!
+            NSLog("%@", "[KidsTV][Baidu] fetchM3U8 attempt \(attempt) url: \(url.absoluteString.prefix(200))")
+            let (data, response) = try await http.get(url, headers: ["User-Agent": "pan.baidu.com"])
+            let responsePreview = String(data: data.prefix(300), encoding: .utf8) ?? "<binary>"
+            NSLog("%@", "[KidsTV][Baidu] fetchM3U8 attempt \(attempt) response: \(responsePreview)")
+            if let text = String(data: data, encoding: .utf8), text.hasPrefix("#EXTM3U") {
+                return BaiduM3U8Playlist(content: text, finalURL: response.url ?? url)
+            }
+            if let resp = try? JSONDecoder().decode(BaiduStreamingResponse.self, from: data),
+               resp.errno == 133 {
+                let wait = max(resp.ltime ?? 0, resp.adTime ?? 0, 5)
+                if let newToken = resp.adToken, !newToken.isEmpty {
+                    currentAdToken = newToken
+                }
+                NSLog("%@", "[KidsTV][Baidu] errno:133 ad-wait \(wait)s (attempt \(attempt)/\(maxRetries))")
+                if attempt < maxRetries {
+                    try await Task.sleep(for: .seconds(wait))
+                    if attempt.isMultiple(of: 3) {
+                        do {
+                            let refreshed = try await fetchStreamingMeta(baseURL: baseURL, maxRetries: 1)
+                            if let refreshedToken = refreshed.adToken, !refreshedToken.isEmpty {
+                                currentAdToken = refreshedToken
+                                let refreshWait = refreshed.ltime ?? 0
+                                NSLog("%@", "[KidsTV][Baidu] refreshed adToken after repeated 133, ltime=\(refreshWait)")
+                                if refreshWait > 0 {
+                                    try await Task.sleep(for: .seconds(refreshWait))
+                                }
+                            }
+                        } catch {
+                            NSLog("%@", "[KidsTV][Baidu] adToken refresh skipped: \(error.localizedDescription)")
+                        }
+                    }
+                    continue
+                }
+            }
+            throw ScannerError.serverError("Unexpected Baidu response: \(responsePreview)")
+        }
+        throw ScannerError.serverError("Failed to get M3U8 after \(maxRetries) retries")
+    }
+
+    /// Fetch streaming metadata, retrying on error_code 31341 (transcoding in progress).
+    private func fetchStreamingMeta(baseURL: URL, maxRetries: Int = 3) async throws -> BaiduStreamingResponse {
+        var step1Components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)!
+        step1Components.queryItems?.append(URLQueryItem(name: "nom3u8", value: "1"))
+        let url = step1Components.url!
+
+        for attempt in 1...maxRetries {
+            let data: Data
+            do {
+                let (d, _) = try await http.get(url, headers: ["User-Agent": "pan.baidu.com"])
+                data = d
+            } catch let HTTPError.badStatus(_, body) {
+                // Baidu returns HTTP 400 for some streaming errors but includes JSON body
+                data = body
+            }
+
+            let resp = try JSONDecoder().decode(BaiduStreamingResponse.self, from: data)
+
+            if resp.error_code == 31341 {
+                if attempt < maxRetries {
+                    try await Task.sleep(for: .seconds(3))
+                    continue
+                }
+                throw ScannerError.serverError("Video is being transcoded by Baidu. Try again in a few minutes.")
+            }
+
+            if let errorCode = resp.error_code, errorCode != 0 {
+                throw ScannerError.serverError(Self.errorMessage(for: errorCode))
+            }
+
+            return resp
+        }
+
+        throw ScannerError.serverError("Baidu streaming failed after \(maxRetries) retries")
+    }
+
+    private static func errorMessage(for code: Int) -> String {
+        switch code {
+        case 31024: return "Access denied"
+        case 31066: return "File not found"
+        case 31339: return "This video cannot be played"
+        case 31341: return "Video is being transcoded. Try again in a few minutes."
+        case 31346: return "Video transcoding failed"
+        default:    return "Baidu streaming error \(code)"
+        }
+    }
+
+    private func streamingRequestURL(token: String, path: String, type: String) -> URL {
+        var c = URLComponents(string: "https://pan.baidu.com/rest/2.0/xpan/file")!
+        c.queryItems = [
+            URLQueryItem(name: "method", value: "streaming"),
+            URLQueryItem(name: "access_token", value: token),
+            URLQueryItem(name: "path", value: path),
+            URLQueryItem(name: "type", value: type),
+        ]
+        return c.url!
     }
 
     // MARK: - Auth Flow
@@ -48,7 +309,9 @@ struct BaiduPanScanner: SourceScanner {
             URLQueryItem(name: "response_type", value: "code"),
             URLQueryItem(name: "client_id", value: clientId),
             URLQueryItem(name: "redirect_uri", value: redirectURI),
-            URLQueryItem(name: "scope", value: "basic,netdisk"),
+            URLQueryItem(name: "scope", value: "basic netdisk"),
+            URLQueryItem(name: "display", value: "touch"),   // mobile UI
+            URLQueryItem(name: "locale", value: "zh_CN"),    // Chinese
         ]
         return c.url!
     }
@@ -91,7 +354,7 @@ struct BaiduPanScanner: SourceScanner {
                     videos.append(Video(
                         title: title,
                         sourceId: sourceId,
-                        remotePath: "",
+                        remotePath: item.path,
                         duration: 0,
                         resolution: nil,
                         fileSize: item.size,
@@ -123,11 +386,16 @@ private struct BaiduFileItem: Codable {
     let isdir: Int  // 1 = folder, 0 = file
 }
 
-private struct BaiduFileMetaResponse: Codable {
-    let list: [BaiduFileMeta]
+private struct BaiduStreamingResponse: Codable {
+    let errno: Int?
+    let error_code: Int?
+    let request_id: Int64?
+    let adTime: Int?
+    let adToken: String?
+    let ltime: Int?
 }
 
-private struct BaiduFileMeta: Codable {
-    let dlink: String?
-    let filename: String?
+private struct BaiduM3U8Playlist {
+    let content: String
+    let finalURL: URL
 }

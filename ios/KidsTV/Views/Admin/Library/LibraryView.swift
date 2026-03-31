@@ -5,6 +5,7 @@ struct LibraryView: View {
     @State private var search = ""
     @State private var sourceFilter: String? = nil
     @State private var isGrid = true
+    @State private var selectedVideo: Video?
 
     private var filtered: [Video] {
         store.videos.filter { video in
@@ -51,6 +52,9 @@ struct LibraryView: View {
                 }
             }
         }
+        .sheet(item: $selectedVideo) { video in
+            VideoDetailSheet(video: video)
+        }
     }
 
     private var gridView: some View {
@@ -58,6 +62,7 @@ struct LibraryView: View {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: 12)], spacing: 12) {
                 ForEach(filtered) { video in
                     VideoGridCard(video: video, channels: channelBadges(for: video))
+                        .onTapGesture { selectedVideo = video }
                 }
             }
             .padding(16)
@@ -67,6 +72,7 @@ struct LibraryView: View {
     private var listView: some View {
         List(filtered) { video in
             VideoListRow(video: video, channels: channelBadges(for: video))
+                .onTapGesture { selectedVideo = video }
         }
     }
 
@@ -151,5 +157,96 @@ struct VideoListRow: View {
             }
         }
         .padding(.vertical, 2)
+    }
+}
+
+struct VideoDetailSheet: View {
+    @Environment(AppStore.self) private var store
+    let video: Video
+    @State private var streamingURL: String = ""
+    @State private var streamingHeaders: String = ""
+    @State private var isResolving = false
+    @State private var resolveError: String?
+
+    private var sourceName: String {
+        store.sources.first { $0.id == video.sourceId }?.name ?? "Unknown"
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section("Basic Info") {
+                    row("Title", video.title)
+                    row("Source", sourceName)
+                    row("Duration", video.formattedDuration)
+                    if let res = video.resolution { row("Resolution", res) }
+                    if let size = video.formattedFileSize { row("File Size", size) }
+                }
+                Section("Remote Info") {
+                    copyableRow("Remote Path", video.remotePath)
+                    if let itemId = video.remoteItemId {
+                        copyableRow("Remote Item ID", itemId)
+                    }
+                    copyableRow("Video ID", video.id)
+                    copyableRow("Source ID", video.sourceId)
+                }
+                Section("Streaming URL") {
+                    if isResolving {
+                        HStack {
+                            ProgressView()
+                            Text("Resolving...").foregroundStyle(.secondary)
+                        }
+                    } else if let error = resolveError {
+                        Text(error).foregroundStyle(.red).font(.caption)
+                    } else if !streamingURL.isEmpty {
+                        copyableRow("URL", streamingURL)
+                        if !streamingHeaders.isEmpty {
+                            copyableRow("Headers", streamingHeaders)
+                        }
+                    }
+                    Button("Resolve Streaming URL") {
+                        resolveStreamURL()
+                    }
+                    .disabled(isResolving)
+                }
+            }
+            .navigationTitle("Video Detail")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+
+    private func row(_ label: String, _ value: String) -> some View {
+        HStack {
+            Text(label).foregroundStyle(.secondary)
+            Spacer()
+            Text(value).multilineTextAlignment(.trailing)
+        }
+        .font(.subheadline)
+    }
+
+    private func copyableRow(_ label: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label).font(.caption).foregroundStyle(.secondary)
+            Text(value)
+                .font(.system(.caption, design: .monospaced))
+                .textSelection(.enabled)
+        }
+        .padding(.vertical, 2)
+    }
+
+    private func resolveStreamURL() {
+        isResolving = true
+        resolveError = nil
+        Task {
+            do {
+                let media = try await store.resolvePlaybackURL(for: video)
+                streamingURL = media.url.absoluteString
+                streamingHeaders = media.httpHeaders.isEmpty ? "" :
+                    media.httpHeaders.map { "\($0.key): \($0.value)" }.joined(separator: "\n")
+            } catch {
+                resolveError = error.localizedDescription
+            }
+            isResolving = false
+        }
     }
 }
