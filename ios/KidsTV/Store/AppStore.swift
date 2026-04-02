@@ -15,6 +15,8 @@ final class AppStore {
     var settings: AppSettings = AppSettings()
     var locale: AppLocale = .en
     var isAdminAuthenticated: Bool = false
+    @ObservationIgnored
+    private let playbackResolver = PlaybackResolutionCache()
 
     // MARK: - Init
 
@@ -237,23 +239,53 @@ final class AppStore {
     // MARK: - Streaming URL Resolution
 
     func resolvePlaybackURL(for video: Video) async throws -> StreamableMedia {
+        if let localMedia = resolveLocalPlaybackURL(for: video) {
+            return localMedia
+        }
+
         guard let source = sources.first(where: { $0.id == video.sourceId }),
               let scanner = ScannerRegistry.scanner(for: source.type) else {
             // Local file fallback
             return StreamableMedia(url: URL(fileURLWithPath: video.remotePath), httpHeaders: [:])
         }
-        return try await scanner.streamingURL(for: video, source: source)
+        let cacheKey = playbackResolutionCacheKey(for: video, source: source)
+        return try await playbackResolver.resolve(cacheKey: cacheKey) {
+            try await scanner.streamingURL(for: video, source: source)
+        }
     }
 
-    func prefetchPlayback(for video: Video) {
-        Task(priority: .background) {
-            do {
-                _ = try await resolvePlaybackURL(for: video)
-                print("[KidsTV] Prefetched playback for \(video.title)")
-            } catch {
-                print("[KidsTV] Prefetch failed for \(video.title): \(error)")
+    func prefetchPlaybackURL(for video: Video) {
+        guard resolveLocalPlaybackURL(for: video) == nil,
+              let source = sources.first(where: { $0.id == video.sourceId }),
+              let scanner = ScannerRegistry.scanner(for: source.type)
+        else {
+            return
+        }
+
+        let cacheKey = playbackResolutionCacheKey(for: video, source: source)
+        Task {
+            _ = try? await playbackResolver.resolve(cacheKey: cacheKey) {
+                try await scanner.streamingURL(for: video, source: source)
             }
         }
+    }
+
+    private func resolveLocalPlaybackURL(for video: Video) -> StreamableMedia? {
+        guard let source = sources.first(where: { $0.id == video.sourceId }),
+              ScannerRegistry.scanner(for: source.type) != nil
+        else {
+            return StreamableMedia(url: URL(fileURLWithPath: video.remotePath), httpHeaders: [:])
+        }
+        return nil
+    }
+
+    private func playbackResolutionCacheKey(for video: Video, source: MediaSource) -> String {
+        [
+            source.id,
+            source.config.accessToken ?? "",
+            video.id,
+            video.remotePath
+        ].joined(separator: "|")
     }
 
     // MARK: - Watch Time
@@ -335,5 +367,41 @@ final class AppStore {
         ]
 
         save()
+    }
+}
+
+private actor PlaybackResolutionCache {
+    private struct CachedEntry {
+        let media: StreamableMedia
+        let createdAt: Date
+    }
+
+    private let ttl: TimeInterval = 90
+    private var cached: [String: CachedEntry] = [:]
+    private var inflight: [String: Task<StreamableMedia, Error>] = [:]
+
+    func resolve(cacheKey: String, loader: @escaping @Sendable () async throws -> StreamableMedia) async throws -> StreamableMedia {
+        if let entry = cached[cacheKey], Date().timeIntervalSince(entry.createdAt) < ttl {
+            return entry.media
+        }
+
+        if let task = inflight[cacheKey] {
+            return try await task.value
+        }
+
+        let task = Task<StreamableMedia, Error> {
+            try await loader()
+        }
+        inflight[cacheKey] = task
+
+        do {
+            let media = try await task.value
+            cached[cacheKey] = CachedEntry(media: media, createdAt: Date())
+            inflight[cacheKey] = nil
+            return media
+        } catch {
+            inflight[cacheKey] = nil
+            throw error
+        }
     }
 }

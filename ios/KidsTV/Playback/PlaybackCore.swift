@@ -3,18 +3,14 @@ import Foundation
 struct PlaybackSource {
     let url: URL?
     let headers: [String: String]
-    let segments: [StreamSegment]?
     let requiresResolvedStream: Bool
     let signature: String
 
     var isPendingResolution: Bool {
-        requiresResolvedStream && url == nil && (segments?.isEmpty ?? true)
+        requiresResolvedStream && url == nil
     }
 
     var resolvedURL: URL? {
-        if let segments, let first = segments.first {
-            return first.url
-        }
         return url
     }
 }

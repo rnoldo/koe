@@ -11,6 +11,9 @@ xcuserdata/
 Pods/
 .build/
 *.resolved
+Vendor/MPVKit/.swiftpm/
+Vendor/MPVKit/LocalArtifacts/
+Vendor/MPVKit/LocalArtifacts.symlink.bak
 
 # Secrets
 KidsTV/Secrets.swift
@@ -23,3 +26,6 @@ fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
+
+# Debug symbols / local binary artifacts
+*.dSYM/

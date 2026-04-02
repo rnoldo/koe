@@ -5,7 +5,6 @@ struct VideoPlayerView: UIViewRepresentable {
     let volume: Double
     var streamURL: URL?
     var streamHeaders: [String: String]?
-    var streamSegments: [StreamSegment]?
     var requiresResolvedStream: Bool = false
     @Binding var currentTime: TimeInterval
     @Binding var isPlaying: Bool
@@ -15,7 +14,6 @@ struct VideoPlayerView: UIViewRepresentable {
         PlaybackSource(
             url: streamURL,
             headers: streamHeaders ?? [:],
-            segments: streamSegments,
             requiresResolvedStream: requiresResolvedStream,
             signature: streamSignature()
         )
@@ -44,10 +42,6 @@ struct VideoPlayerView: UIViewRepresentable {
     }
 
     private func streamSignature() -> String {
-        if let segments = streamSegments, !segments.isEmpty {
-            let joined = segments.prefix(4).map { $0.url.absoluteString }.joined(separator: "|")
-            return "segments:\(segments.count):\(joined)"
-        }
         if let streamURL {
             return "url:\(streamURL.absoluteString)"
         }

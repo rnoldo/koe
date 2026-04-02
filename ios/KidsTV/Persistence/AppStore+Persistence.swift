@@ -40,5 +40,31 @@ extension AppStore {
         watchTimeRecords = state.watchTimeRecords
         settings = state.settings
         locale = state.locale
+        if sanitizeReferences() {
+            save()
+        }
+    }
+
+    @discardableResult
+    private func sanitizeReferences() -> Bool {
+        var changed = false
+        let validVideoIds = Set(videos.map(\.id))
+        for index in channels.indices {
+            let oldCount = channels[index].videoIds.count
+            channels[index].videoIds.removeAll { !validVideoIds.contains($0) }
+            if channels[index].videoIds.count != oldCount {
+                changed = true
+            }
+        }
+
+        let validChannelIds = Set(channels.map(\.id))
+        let filteredPlaybackStates = playbackStates.filter { channelId, state in
+            validChannelIds.contains(channelId) && validVideoIds.contains(state.currentVideoId)
+        }
+        if filteredPlaybackStates.count != playbackStates.count {
+            changed = true
+            playbackStates = filteredPlaybackStates
+        }
+        return changed
     }
 }

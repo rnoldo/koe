@@ -15,12 +15,9 @@ struct KidsView: View {
     // Streaming resolution
     @State private var resolvedStreamURL: URL?
     @State private var resolvedStreamHeaders: [String: String]?
-    @State private var resolvedStreamSegments: [StreamSegment]?
     @State private var isResolvingStream = false
     @State private var streamResolveError: String?
     @State private var streamResolveGeneration = 0
-    @State private var prefetchedVideoId: String?
-
     // UI state
     @State private var showHUD = false
     @State private var showVideoList = false
@@ -93,7 +90,6 @@ struct KidsView: View {
                     volume: min(channel.defaultVolume, store.settings.maxVolume),
                     streamURL: resolvedStreamURL,
                     streamHeaders: resolvedStreamHeaders,
-                    streamSegments: resolvedStreamSegments,
                     requiresResolvedStream: videoNeedsResolve(video),
                     currentTime: $currentTime,
                     isPlaying: $isPlaying
@@ -184,6 +180,10 @@ struct KidsView: View {
             saveState()
             stopWatchTimer()
         }
+        .onChange(of: currentVideo?.id) { _, _ in
+            currentTime = 0
+            resolveStream()
+        }
         .onChange(of: videoIndex) { _, _ in resolveStream() }
         .onChange(of: channelIndex) { _, _ in resolveStream() }
         .animation(.easeInOut(duration: 0.2), value: showHUD)
@@ -273,7 +273,6 @@ struct KidsView: View {
         guard let video = currentVideo else {
             resolvedStreamURL = nil
             resolvedStreamHeaders = nil
-            resolvedStreamSegments = nil
             isResolvingStream = false
             streamResolveError = nil
             return
@@ -286,6 +285,7 @@ struct KidsView: View {
             isResolvingStream = true
         }
         streamResolveError = nil
+        prefetchUpcomingStreams(currentVideoId: video.id)
 
         Task {
             do {
@@ -294,10 +294,8 @@ struct KidsView: View {
                     guard generation == streamResolveGeneration else { return }
                     resolvedStreamURL = media.url
                     resolvedStreamHeaders = media.httpHeaders.isEmpty ? nil : media.httpHeaders
-                    resolvedStreamSegments = media.segments
                     streamResolveError = nil
                     isResolvingStream = false
-                    prefetchUpcomingVideo()
                 }
             } catch {
                 await MainActor.run {
@@ -305,7 +303,6 @@ struct KidsView: View {
                     print("[KidsTV] Stream resolve failed: \(error)")
                     resolvedStreamURL = nil
                     resolvedStreamHeaders = nil
-                    resolvedStreamSegments = nil
                     streamResolveError = error.localizedDescription
                     isResolvingStream = false
                 }
@@ -313,17 +310,16 @@ struct KidsView: View {
         }
     }
 
+    private func prefetchUpcomingStreams(currentVideoId: String) {
+        let candidates = currentVideos.filter { $0.id != currentVideoId }.prefix(1)
+        for video in candidates where videoNeedsResolve(video) {
+            store.prefetchPlaybackURL(for: video)
+        }
+    }
+
     private func videoNeedsResolve(_ video: Video) -> Bool {
         !video.remotePath.hasPrefix("http://") && !video.remotePath.hasPrefix("https://")
             && store.sources.first(where: { $0.id == video.sourceId })?.type != .local
-    }
-
-    private func prefetchUpcomingVideo() {
-        guard videoIndex < currentVideos.count - 1 else { return }
-        let nextVideo = currentVideos[videoIndex + 1]
-        guard prefetchedVideoId != nextVideo.id else { return }
-        prefetchedVideoId = nextVideo.id
-        store.prefetchPlayback(for: nextVideo)
     }
 
     // MARK: - Actions

@@ -40,7 +40,6 @@
 		81CBAD75841D7B48071A7BBD /* Channel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD4E134B15DADC36142B245C /* Channel.swift */; };
 		8A58FB8573519C3DEB82AA90 /* NumpadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DB5977497DBECF41918161E /* NumpadView.swift */; };
 		91685FEECD47011AC62F9152 /* SourceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 047726567AC061C8D96FD122 /* SourceDetailView.swift */; };
-		984D5ADA0C309AFEF5C91E76 /* LocalStreamProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03F98A4D72D3EF4667B201B0 /* LocalStreamProxy.swift */; };
 		98CDEB19B7EAA88FE328F4D0 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF119A354598057AD869D1A5 /* LibraryView.swift */; };
 		A7D9788C054BB74ADB2D1651 /* SourcesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5150C872AED54742D89B120A /* SourcesView.swift */; };
 		B3E475CE5BACFBC6C0BE7638 /* ChannelHUDView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9A750624BE64EE94DA88C0C /* ChannelHUDView.swift */; };
@@ -57,7 +56,6 @@
 
 /* Begin PBXFileReference section */
 		02561301B311778CA7D9BFF8 /* ScannerRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerRegistry.swift; sourceTree = "<group>"; };
-		03F98A4D72D3EF4667B201B0 /* LocalStreamProxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStreamProxy.swift; sourceTree = "<group>"; };
 		04BA3154D6E447E6A4A2AE1F /* BaiduPlaybackPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaiduPlaybackPipeline.swift; sourceTree = "<group>"; };
 		047726567AC061C8D96FD122 /* SourceDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceDetailView.swift; sourceTree = "<group>"; };
 		069B1DEB2C910AB7A425B502 /* WebDAVScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebDAVScanner.swift; sourceTree = "<group>"; };
@@ -320,7 +318,6 @@
 			children = (
 				04BA3154D6E447E6A4A2AE1F /* BaiduPlaybackPipeline.swift */,
 				3A4C42E7FE3AEA7CBA828E6C /* HTTPClient.swift */,
-				03F98A4D72D3EF4667B201B0 /* LocalStreamProxy.swift */,
 				12187516256C4E17A7491BA4 /* ScannerError.swift */,
 				02561301B311778CA7D9BFF8 /* ScannerRegistry.swift */,
 				3DC19CB2BEAAF0EE1F14A026 /* SourceScanner.swift */,
@@ -439,7 +436,6 @@
 				DA5B0F2D6DC7A995D3EC0777 /* KidsTVApp.swift in Sources */,
 				634ED785B3E82D28F6D0DDC8 /* KidsView.swift in Sources */,
 				98CDEB19B7EAA88FE328F4D0 /* LibraryView.swift in Sources */,
-				984D5ADA0C309AFEF5C91E76 /* LocalStreamProxy.swift in Sources */,
 				C926C2E19861977E7C0072F1 /* LockScreenView.swift in Sources */,
 				0CFE4CE41BFE9866EDD1AB1F /* MediaSource.swift in Sources */,
 				8A58FB8573519C3DEB82AA90 /* NumpadView.swift in Sources */,
