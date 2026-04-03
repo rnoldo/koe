@@ -2,6 +2,10 @@ import Foundation
 
 struct BaiduPanScanner: SourceScanner {
 
+    /// When true, uses BaiduPlaybackPipeline (stream_cb).
+    /// When false, writes M3U8 to a temp file and lets mpv/FFmpeg handle HLS directly.
+    static let usePipelinePath = false
+
     private let http = HTTPClient.shared
     private let streamingRequestHeaders = [
         "User-Agent": "pan.baidu.com",
@@ -60,11 +64,35 @@ struct BaiduPanScanner: SourceScanner {
             "[KidsTV][Baidu] segment queue ready: count=\(segments.count) totalDuration=\(Int(totalDuration))s first=\(segments.first?.url.absoluteString ?? "nil")"
         )
 
-        return try await BaiduPlaybackPipeline.shared.preparePlayableMedia(
-            video: video,
-            segments: segments,
-            headers: requestHeaders
-        )
+        if Self.usePipelinePath {
+            return try await BaiduPlaybackPipeline.shared.preparePlayableMedia(
+                video: video,
+                segments: segments,
+                headers: requestHeaders
+            )
+        }
+
+        // Simple path: rewrite M3U8 with absolute segment URLs, write to temp file,
+        // let mpv/FFmpeg handle HLS natively (headers are passed via mpv user-agent/http-header-fields).
+        let absoluteContent = absoluteM3U8(playlist.content, baseURL: playlist.finalURL)
+        let tmpURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("baidu_\(UUID().uuidString).m3u8")
+        try absoluteContent.write(to: tmpURL, atomically: true, encoding: .utf8)
+        NSLog("%@", "[KidsTV][Baidu] simple path: wrote temp M3U8 \(tmpURL.lastPathComponent), segments=\(segments.count)")
+        return StreamableMedia(url: tmpURL, httpHeaders: requestHeaders)
+    }
+
+    /// Rewrites relative segment URLs in an M3U8 playlist to absolute URLs.
+    /// Non-segment lines (comments, tags) are left unchanged.
+    private func absoluteM3U8(_ content: String, baseURL: URL) -> String {
+        content.split(separator: "\n", omittingEmptySubsequences: false)
+            .map { rawLine -> String in
+                let line = rawLine.trimmingCharacters(in: .whitespaces)
+                guard !line.isEmpty, !line.hasPrefix("#") else { return String(rawLine) }
+                if line.hasPrefix("http://") || line.hasPrefix("https://") { return line }
+                return URL(string: line, relativeTo: baseURL)?.absoluteString ?? line
+            }
+            .joined(separator: "\n")
     }
 
     private func logOriginalPlaylistDiagnostics(_ playlist: String) {
