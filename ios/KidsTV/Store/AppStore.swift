@@ -341,9 +341,9 @@ final class AppStore {
         sources = [s1, s2, s3]
 
         let colors = ["#E74C3C","#3498DB","#2ECC71","#F39C12","#9B59B6","#1ABC9C"]
-        videos = (1...20).map { i in
+        videos = (1...5).map { i in
             Video(id: "v\(i)", title: "Video \(i)",
-                  sourceId: i <= 8 ? "s1" : (i <= 15 ? "s2" : "s3"),
+                  sourceId: "s1",
                   remotePath: "/media/video\(i).mp4",
                   duration: Double.random(in: 300...3600),
                   resolution: ["1280x720","1920x1080","3840x2160"].randomElement(),
@@ -354,16 +354,10 @@ final class AppStore {
         channels = [
             Channel(id: "c1", name: "Cartoons", iconName: "sparkles",
                     iconColor: "#E74C3C", defaultVolume: 0.8, sortOrder: 0,
-                    videoIds: Array(videos.prefix(5).map(\.id))),
+                    videoIds: Array(videos.prefix(3).map(\.id))),
             Channel(id: "c2", name: "Nature", iconName: "leaf",
                     iconColor: "#2ECC71", defaultVolume: 0.7, sortOrder: 1,
-                    videoIds: Array(videos.dropFirst(5).prefix(5).map(\.id))),
-            Channel(id: "c3", name: "Science", iconName: "atom",
-                    iconColor: "#3498DB", defaultVolume: 0.75, sortOrder: 2,
-                    videoIds: Array(videos.dropFirst(10).prefix(5).map(\.id))),
-            Channel(id: "c4", name: "Music", iconName: "music.note",
-                    iconColor: "#9B59B6", defaultVolume: 0.9, sortOrder: 3,
-                    videoIds: Array(videos.dropFirst(15).map(\.id))),
+                    videoIds: Array(videos.dropFirst(3).map(\.id))),
         ]
 
         save()

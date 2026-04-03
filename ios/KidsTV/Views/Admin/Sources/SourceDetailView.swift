@@ -78,13 +78,6 @@ struct SourceDetailView: View {
                             Label("Choose Folder…", systemImage: "folder.badge.gear")
                         }
                     }
-                    .sheet(isPresented: $showFolderPicker) {
-                        BaiduFolderPickerView(token: src.config.accessToken!) { selectedPath in
-                            var updated = src
-                            updated.config.rootFolderId = selectedPath
-                            store.updateSource(updated)
-                        }
-                    }
                 }
 
                 Section("Enable") {
@@ -120,6 +113,15 @@ struct SourceDetailView: View {
             }
         }
         .navigationTitle(source.name)
+        .sheet(isPresented: $showFolderPicker) {
+            if let src = liveSource, let token = src.config.accessToken {
+                BaiduFolderPickerView(token: token) { selectedPath in
+                    var updated = src
+                    updated.config.rootFolderId = selectedPath
+                    store.updateSource(updated)
+                }
+            }
+        }
     }
 
     @MainActor

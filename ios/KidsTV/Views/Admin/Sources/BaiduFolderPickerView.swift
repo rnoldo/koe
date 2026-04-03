@@ -8,6 +8,7 @@ struct BaiduFolderPickerView: View {
 
     @State private var pathStack: [String] = ["/"]
     @State private var folders: [BaiduFolderItem] = []
+    @State private var videoFiles: [BaiduFolderItem] = []
     @State private var isLoading = false
     @State private var error: String?
 
@@ -67,6 +68,20 @@ struct BaiduFolderPickerView: View {
                                 }
                             }
                         }
+
+                        if !videoFiles.isEmpty {
+                            Section("视频文件 (\(videoFiles.count))") {
+                                ForEach(videoFiles) { file in
+                                    HStack {
+                                        Image(systemName: "film")
+                                            .foregroundStyle(.blue)
+                                        Text(file.name)
+                                            .foregroundStyle(.secondary)
+                                            .font(.subheadline)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -90,10 +105,21 @@ struct BaiduFolderPickerView: View {
     }
 
     private func loadFolders() async {
+        // Brief yield lets the sheet finish its presentation animation before
+        // we start the network request, avoiding spurious task cancellations.
+        try? await Task.sleep(for: .milliseconds(200))
+        guard !Task.isCancelled else { return }
+
         isLoading = true
         error = nil
         do {
-            folders = try await fetchFolders(path: currentPath, token: token)
+            let result = try await fetchItems(path: currentPath, token: token)
+            folders = result.folders
+            videoFiles = result.videos
+        } catch is CancellationError {
+            return
+        } catch let urlError as URLError where urlError.code == .cancelled {
+            return
         } catch {
             self.error = error.localizedDescription
         }
@@ -101,8 +127,16 @@ struct BaiduFolderPickerView: View {
     }
 }
 
-private func fetchFolders(path: String, token: String) async throws -> [BaiduFolderItem] {
-    var all: [BaiduFolderItem] = []
+private let videoExtensions: Set<String> = ["mp4", "m4v", "mov", "avi", "mkv", "wmv", "flv", "webm", "ts", "rmvb"]
+
+private struct FetchResult {
+    let folders: [BaiduFolderItem]
+    let videos: [BaiduFolderItem]
+}
+
+private func fetchItems(path: String, token: String) async throws -> FetchResult {
+    var folders: [BaiduFolderItem] = []
+    var videos: [BaiduFolderItem] = []
     var start = 0
     let limit = 100
 
@@ -115,23 +149,28 @@ private func fetchFolders(path: String, token: String) async throws -> [BaiduFol
             URLQueryItem(name: "start", value: "\(start)"),
             URLQueryItem(name: "limit", value: "\(limit)"),
             URLQueryItem(name: "order", value: "name"),
-            URLQueryItem(name: "folder", value: "1"),   // folders only
         ]
         let (data, _) = try await HTTPClient.shared.get(c.url!, headers: [:])
         let resp = try JSONDecoder().decode(BaiduListResponse.self, from: data)
+        if let errno = resp.errno, errno != 0 {
+            throw ScannerError.serverError("Baidu error \(errno): \(resp.errmsg ?? "unknown")")
+        }
         guard let list = resp.list else { break }
 
-        for item in list where item.isdir == 1 {
-            all.append(BaiduFolderItem(
-                id: "\(item.fs_id)",
-                name: item.server_filename,
-                path: item.path
-            ))
+        for item in list {
+            if item.isdir == 1 {
+                folders.append(BaiduFolderItem(id: item.path, name: item.displayName, path: item.path))
+            } else {
+                let ext = (item.path as NSString).pathExtension.lowercased()
+                if videoExtensions.contains(ext) {
+                    videos.append(BaiduFolderItem(id: item.path, name: item.displayName, path: item.path))
+                }
+            }
         }
         if list.count < limit { break }
         start += limit
     }
-    return all
+    return FetchResult(folders: folders, videos: videos)
 }
 
 struct BaiduFolderItem: Identifiable {
@@ -141,12 +180,17 @@ struct BaiduFolderItem: Identifiable {
 }
 
 private struct BaiduListResponse: Codable {
+    let errno: Int?
+    let errmsg: String?
     let list: [BaiduListItem]?
 }
 
 private struct BaiduListItem: Codable {
-    let fs_id: Int64
     let path: String
-    let server_filename: String
-    let isdir: Int
+    let server_filename: String?
+    let isdir: Int?
+
+    var displayName: String {
+        server_filename ?? URL(fileURLWithPath: path).lastPathComponent
+    }
 }
